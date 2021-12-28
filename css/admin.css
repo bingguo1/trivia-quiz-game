@@ -1,0 +1,14 @@
+#bar{
+  background-color: lightgreen;
+  height:40px;
+ position: relative;
+
+}
+
+#right{
+  position: absolute;
+
+  right:0px;
+
+
+}
