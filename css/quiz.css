@@ -46,19 +46,15 @@ table {
 form,label,input{
 margin:0;
 padding:0;
-border:1px solid red;
+/* border:1px solid red; */
 
 }
 
 img{
   margin:0;
   padding:0;
-  border:2px solid green;
-}
-#head{
-  position : absolute;
-  right:5px;
-  top:0px;
+
+  /* border:2px solid green; */
 }
 
 #question{
@@ -116,14 +112,13 @@ input[type=checkbox] {
 //  width: 49%;
 }
 
- #imghistory,#imgastronomy,#imgphysics,#imgcomputer,#imgpolitics,#imggeography,#imglife,#imgbiology{
-  // width:100%;
-}
+/*  #imghistory,#imgastronomy,#imgphysics,#imgcomputer,#imgpolitics,#imggeography,#imglife,#imgbiology{ */
+/*   // width:100%; */
+/* } */
 
 [id^="img"]{
-  width:192px;
-  height:192px;
-
+  width:160px;
+  height:160px;
 }
 label{
 //  width:50%;
