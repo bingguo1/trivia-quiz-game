@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="RichText/src/richtext.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
   <script src="RichText/src/jquery.richtext.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@3/dist/js.cookie.min.js"></script>
 
   
 </head>
@@ -53,15 +54,30 @@
       });   // ajax
   }
 
-
+    function fillCategories(){
+	if(Cookies.get("categorylist")) {
+	    let node="";
+	    let categorylist=JSON.parse(Cookies.get("categorylist"));
+	    for (let [key, value] of Object.entries(categorylist)) {
+		console.log(`${key}: ${value}`);
+		node+=`<option value='${key}'>${value}</option>`;
+	    }
+	    $("#category").append(node);
+	}
+	
+    }
+    
     $(function(){
 	// https://github.com/webfashionist/RichText
 	// https://stackoverflow.com/questions/19491336/how-to-get-url-parameter-using-jquery-or-plain-javascript
+	$("#greet").append(getit("signinUser"));
+	fillCategories();
 	let searchParams = new URLSearchParams(window.location.search);
 	var englishMode=false;
 	var sqlmode;
 	if(searchParams.get('mode')=="edit"){
 	    sqlmode="update";
+	    $("#submit-button").attr(value, "Change it");
 	}else{
 	    sqlmode="insert";
 	}
@@ -85,6 +101,10 @@
 		$("#answer").val(result[3]);
 		$("#detail").val(result[4]).trigger("change");  /// you need this to trigger the show (RichText from github)
 	    });
+	}else{
+	    if(Cookies.get("previousCategory")) {
+		$("#category").val(Cookies.get("previousCategory"));
+	    }
 	}
 
 
@@ -92,15 +112,15 @@
 	    $("#question").trigger("change");
 	    $("#detail").trigger("change");
 	    var category=$("#category").val();
-	    var question=$("#question").val();
+	    var question=$("#question").val().trim();
 	    var answer=$("#answer").val();
 	    var detail=$("#detail").val();
 	    console.log("new question:"+question);
 	    console.log("new detail:"+detail);
-	    
+	    if(category=="" || question.trim()=="" || answer.trim()=="") return;
 	    var arr=[category,question,answer,detail];
 	    $.ajax({    //create an ajax request to load_page.php
-		async: false,
+		async: true,
 		global: false,
 		data: { sqlmode: sqlmode, number: number,category: category, question: question, answer:answer, detail:detail},
 		type: "POST",
@@ -108,9 +128,21 @@
 		dataType: "json",   //expect html to be returned
 		success: function(response){
 		    console.log("response:"+response);
+		    $("#succeed").fadeIn();
+		    if(searchParams.get('mode')=="edit"){
+			window.location.href = "https://barney.physics.sc.edu/~bing/web/ipage/gate/quiz/quiz.html";
+		    }else{
+			$("#question").val("");
+			$("#answer").val("");
+			$("#detail").val("");
+			$("#succeed").fadeOut();
+		    }
+		    
 		}
 	    });   // ajax
 	    //    e.preventDefault();
+	    Cookies.set("previousCategory", category);
+
     });
 
 
@@ -120,22 +152,27 @@
 
   <div class="container">
 
-    <div id="bar">
-      Hello, Administrator!
-      <a href="signadmin.html">Back to Admin </a>
-      <a href="quiz.html"> Back to Quiz</a>
+    <div id="row">
+      <a href="signadmin.html"> <button type="button"  class="btn btn-primary">Back to Admin</button> </a>
+    <a href="quiz.html"> <button type="button"  class="btn btn-primary">Back to Quiz</button></a>
+    <span id="greet" style="float:right;">Hi! </span>
     </div>
 
     <div>
       <form id="form1" method="post"  action="javascript:void(0);">
-        Category: <input type="number" name="category" id="category" min="0" max="99" required> <br>
+	<label for="category">Select Category</label>
+	<select name="categories" id="category">
+	</select>
+	<br>
         Question: <br>
         <textarea name="question" id="question" rows="1"> </textarea> <br>
         Answer: <br>
         <textarea name="answer"  id="answer" >   </textarea> <br>
         Detail: <br>
         <textarea name="detail"  id="detail">   </textarea> <br>
-        <input type="submit" value="Change It!">
+    <input type="submit" value="Add It!" id="submit-button">
+    <span id="succeed"> succeeded </span>
+    <span id="fail"> failed </span>
 	<!-- <script> -->
 	<!--   CKEDITOR.replace( 'detail' ); -->
 	<!-- </script> -->

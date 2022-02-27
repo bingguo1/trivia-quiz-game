@@ -44,6 +44,7 @@
 		    $("#info").html("");
 		    setit("signinUser",username);
 		    console.log("username:"+username);
+		    window.location.href="https://barney.physics.sc.edu/~bing/web/ipage/gate/quiz/quiz.html";
 		}
 		else {
 		    console.log("response:"+response);
@@ -181,29 +182,30 @@
 		}
 	    },// rules  // dont' omit this comma
 	    submitHandler: function(form) {
-		$("#info").html("");
-		$("#info").hide();
-		var info=[$("#realname").val(),$("#username").val(),$("#password").val(),$("#email").val(),$("#interests").val()];
-		var result=adduser(info);
-		//  $("#test2").html(result);
-		//		console.log(result);
-		//console.log("the first:"+result[0]);
-		if(result[0]=="succeed") {
-		    setit("signinUser",$("#username").val());
-		    $("#info").html("You created an account successfully!");
-		    $("#info").fadeIn(2000).animate({fontSize: '4em'}, 2000,function(){
-			form.submit();
-		    });
-		}
-		else if(result[0]=="overlap"){
-		    $("#info").html("Sorry, this username is not available, please create a new one!");
-		    $("#info").fadeIn();
-		}
+		$("#info").html("Sorry, user registration stopped");
+		$("#info").fadeIn();
+		//		$("#info").hide();
+		// var info=[$("#realname").val(),$("#username").val(),$("#password").val(),$("#email").val(),$("#interests").val()];
+		// var result=adduser(info);
+		// //  $("#test2").html(result);
+		// //		console.log(result);
+		// //console.log("the first:"+result[0]);
+		// if(result[0]=="succeed") {
+		//     setit("signinUser",$("#username").val());
+		//     $("#info").html("You created an account successfully!");
+		//     $("#info").fadeIn(2000).animate({fontSize: '4em'}, 2000,function(){
+		// 	form.submit();
+		//     });
+		// }
+		// else if(result[0]=="overlap"){
+		//     $("#info").html("Sorry, this username is not available, please create a new one!");
+		//     $("#info").fadeIn();
+		// }
 
-		else {
-		    $("#info").html("Sorry, there's something wrong, Please recreate your account!");
-		    $("#info").fadeIn();
-		}
+		// else {
+		//     $("#info").html("Sorry, there's something wrong, Please recreate your account!");
+		//     $("#info").fadeIn();
+		// }
 	    } // submitHandler
 	}); //validate
 

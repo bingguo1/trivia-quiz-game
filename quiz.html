@@ -38,6 +38,18 @@
       var allQuestionContent=[];
       var allQuestionContentCopy=[];
       var itemList=[];
+
+function getAllSiblingInputs(elem, filter) {
+    var sibs = [];
+//    console.log("ele node name:",elem.nodeName);
+    elem = elem.parentNode.parentNode.firstChild;
+    do {
+        if (elem.nodeType === 3) continue; // text node
+        if (!filter || filter(elem)) sibs.push(elem.firstChild);
+//	console.log("name:",elem.firstChild.value);
+    } while (elem = elem.nextSibling)
+    return sibs;
+}
       function item(number1,question1,answer1,content1,showing1){
 	  this.number=number1;
 	  this.question=question1;
@@ -102,56 +114,141 @@
 	  var i=-1;
 	  var currentSet;
 	  var numberlist;
-	  var categoryCondition=" ";
+	  //	  var categoryCondition=" ";
 	  var chooseAll=false;
 	  var listshowing=false;
 	  var allQuestionShowedBefore=false;
-
-	  console.log("user:"+getit("signinUser"));
+	  var selectedCategoryIds;
+	  var categorylist={};
+	  
+	  //	  console.log("user:"+getit("signinUser"));
 	  if(getit("signinUser")!=""){
 	      $("#username").html(getit("signinUser"));
 	  }
+
 	  
+	  if(Cookies.get("categorylist")) categorylist=JSON.parse(Cookies.get("categorylist"));
+	  //console.log("categorylist:",categorylist);
 	  //////// currently only numberlist is stored via cookie, all the others are session variables
 	  if(getit("state")=="running"){
-	      $("#start1").hide();
-	      $("#shuffleAndGo").hide();
-	      $("#categoriesPics").hide();
-	      numberlist=JSON.parse(Cookies.get("numberlist"));
+	      //	      $("#start1").hide();
+	      //	      $("#categoriesPics").hide();
+	      if(Cookies.get("numberlist")) numberlist=JSON.parse(Cookies.get("numberlist"));
+	      if(Cookies.get("selectedCategoryIds")) selectedCategoryIds=JSON.parse(Cookies.get("selectedCategoryIds"));
+
 	      i=parseInt(getit("iQuestion")); ///convert string to int 
 	      total=getit("total");
 	      showQuestion(i);
-	      categoryCondition=getit("categoryCondition");
+	      $("#showlater").show();
+	      // categoryCondition=getit("categoryCondition");
 	      if(getit("chooseAll")=="true")
 		  chooseAll=true;
-	      console.log("categoryCondition:"+categoryCondition);
+
 	      
 	  }else{
-	      $("#topBar").hide();
-	      $("#showlater").hide();
-	      $("#shuffleAndGo").hide();
-	      $("#categoriesPics").hide();
+	      //$("#showlater").hide();
+	      //$("#select-and-click").hide();
+	      $("#start1").show();
 	  }
 	  
 	  $("#start1").click(function(){
+	      categorylist={};
 	      $("#start1").hide();
-	      $("#categoriesPics").show();
+	      //	      $("#categoriesPics").show();
+	      $.ajax({    //create an ajax request to load_page.php
+		  global: false,
+		  type: "POST",
+		  url: "getAllCategories.php",
+		  dataType: "json",   //expect html to be returned
+		  success: function(response){
+		      // console.log("response:",response);
+		      let htmls="<ul>";
+		      var obj={};
+		      for(const key in response){
+			  
+			  categorylist[response[key].Id]=response[key].name;
+			  htmls+="<li>";
+			  htmls+=`<input type='checkbox' id='${response[key].name}' value='${response[key].Id}' class='option' />`;
+			  htmls+=`<label for="${response[key].name}"> ${response[key].name} </label>`
+			  if(response[key].subcats.length>0){
+			      htmls+="<ul>";
+			      htmls+="<li>";
+			      htmls+=`<input type='checkbox' id='${response[key].name}_0' value='${response[key].Id}' class='subOption'/>`;
+			      htmls+=`<label for="${response[key].name}_0"> ${response[key].name} </label>`
+			      htmls+="</li>";
+			      for(let i=0;i<response[key].subcats.length;i++){
+				  htmls+="<li>";
+				  htmls+=`<input type='checkbox' id='${response[key].subnames[i]}' value='${response[key].subids[i]}' class='subOption'/>`;
+				  htmls+=`<label for="${response[key].subnames[i]}"> ${response[key].subnames[i]} </label>`
+				  htmls+="</li>";
+				  categorylist[response[key].subids[i]]="&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+response[key].subnames[i];
+			      }
+			      
+			      htmls+="</ul>";
+			  }
+			  htmls+="</li>";
+		      }
+		      htmls+="</ul>";
+		      $("#select-categories").html(htmls);
+		      $("#select-and-click").show();
+		      Cookies.set("categorylist",JSON.stringify(categorylist));
+
+		      let checkboxes = document.querySelectorAll('input.subOption');
+		      for(let i=0; i<checkboxes.length; i++) {
+			  let name=
+			  checkboxes[i].onclick = function(evt) {
+
+			      // console.log(" nodename:",evt.target);
+			      const sibs=getAllSiblingInputs(evt.target);
+			      const topCatInput=evt.target.parentNode.parentNode.parentNode.firstChild;
+			      // console.log("topCatInput:",topCatInput.nodeName);
+			      let checkedCount=0;
+			       for(let j=0;j<sibs.length;j++){
+				   if(sibs[j].checked) checkedCount+=1;
+			       }
+			      // console.log("checked :",checkedCount);
+			      topCatInput.checked= checkedCount > 0;
+			      topCatInput.indeterminate = checkedCount > 0 && checkedCount < sibs.length;
+			      
+			  }			  
+		      }
+		      let topboxes = document.querySelectorAll('input.option');
+		      for(let j=0;j<topboxes.length;j++){
+			  topboxes[j].onclick = function(evt) {
+			      //			      console.log("sibling",evt.target.nextSibling);
+			      let ele=evt.target.nextSibling.nextSibling;
+			      if(ele){
+				  Array.prototype.forEach.call(ele.children, li_ele => li_ele.firstChild.checked=this.checked);
+			      }
+
+			  }
+		      }
+		  },
+		  error: function(xhr, status, error){
+		      var errorMessage = xhr.status + ': ' + xhr.statusText;
+		      console.log(" error comming .....");
+		      alert('Error - ' + errorMessage + ' status:' + status + ' error:' + error);
+		  }
+	      });   // ajax
 	  });
 
 	  $("#startThem").click(function(){
-	      var str="SELECT number FROM tbquiz where  ";
-	      if($('#history').prop('checked')) categoryCondition+=" (category>9 AND category<20) OR ";
-	      if($('#astronomy').prop('checked')) categoryCondition+=" (category>19 AND category<30) OR ";
-	      if($('#physics').prop('checked')) categoryCondition+=" (category>29 AND category<40) OR ";
-	      if($('#computer').prop('checked')) categoryCondition+=" (category>39 AND category<50) OR ";
-	      if($('#politics').prop('checked')) categoryCondition+=" (category>49 AND category<60) OR ";
-	      if($('#life').prop('checked')) categoryCondition+=" (category>59 AND category<70) OR ";
-	      if($('#biology').prop('checked')) categoryCondition+=" (category>69 AND category<80) OR ";
-	      if($('#geography').prop('checked')) categoryCondition+=" (category>79 AND category<90) OR ";
-	      if($('#english').prop('checked')) categoryCondition+=" (category>89 AND category<99) OR ";
-	      categoryCondition+=" (category<0)";
-	      str+=categoryCondition;
-	      var stringArr=[];
+	      selectedCategoryIds=[];
+	      const topCatBoxes = document.querySelectorAll('input.option');
+	      const subCatBoxes = document.querySelectorAll('input.subOption');
+	      Array.prototype.forEach.call(topCatBoxes, ele=>{
+		  if(!ele.indeterminate && ele.checked) selectedCategoryIds.push(ele.value);
+	      });
+	      Array.prototype.forEach.call(subCatBoxes, ele=>{
+		  if(ele.checked) selectedCategoryIds.push(ele.value);
+	      });
+
+	      if(selectedCategoryIds.length<1) return;
+	      let str= "SELECT number FROM tbquiz where category in ("+ selectedCategoryIds.join(',')+")";
+	      // console.log("str--->:",str);
+	      Cookies.set("selectedCategoryIds",JSON.stringify(selectedCategoryIds));
+	      //str+=categoryCondition;
+	      let stringArr=[];
 	      stringArr.push("number");
 	      askphp(str,stringArr,function(response){
 		  //		  console.log("length::"+response.length);
@@ -160,17 +257,18 @@
 		      //		      console.log("length now:"+response.length);		      
 		      numberlist=response;
 		      total=numberlist.length;
-		      //		      console.log("total:"+total);
+		      // console.log("numberlist:",numberlist);
 		      $("#stats").html("Total:"+total);
+		      shuffleAndStart();
 		  }else{
 		      alert(response);
 		  }
 	      });
 	      //console.log("numberlist:"+numberlist);
 	      //total=numberlist.length;
-	      $("#categoriesPics").hide();
-	      $("#shuffleAndGo").show();
-	      setit("categoryCondition",categoryCondition);
+	      //	      $("#categoriesPics").hide();
+	      // $("#shuffleAndGo").show();
+	      //	      setit("categoryCondition",categoryCondition);
 	      setit("chooseAll", false);
 	  }); // startThem click
 
@@ -187,12 +285,13 @@
 		      total=numberlist.length;
 		      //		      console.log("total:"+total);
 		      $("#stats").html("Total:"+total);
-		  }else{
+		      shuffleAndStart();
+		  }else{		      
 		      alert(response);
 		  }
 	      });
-	      $("#categoriesPics").hide();
-	      $("#shuffleAndGo").show();
+	      //	      $("#categoriesPics").hide();
+	      // $("#shuffleAndGo").show();
 	      setit("chooseAll", true);
 	  }); // startAll click
 
@@ -218,22 +317,17 @@
 	      $("#stats").html(j+'/'+total);
 	      
 	  }
-	  
-	  $("#shuffleAndGo").click(function(){
+
+	  function shuffleAndStart(){
+	      $("#select-and-click").hide();
 	      shuffle(numberlist);
-	      $("#shuffleAndGo").hide();
 	      i=0;
 	      $("#showlater").show();
-	      $("#topBar").show();
 	      showQuestion(i);
-
 	      setit("total",total);
 	      setit("state","running");
 	      Cookies.set("numberlist",JSON.stringify(numberlist));
-	      
-	      
-	  }); // shuffleAndGo click
-	  
+	  }	  
 	
 	  $("#nextQuestion").click(function() {
 	      if(i==(total-1)) return;
@@ -256,38 +350,44 @@
 	  
 	  $("#giveup").click(function() {
 	      setit("state","");
-	      window.location.reload();
+	      $("#showlater").hide();
+	      $("#select-and-click").show();
+	      allQuestionShowedBefore=false;
+	      $("#allQuestionsHere").html("");
+	      $("#showAll").html("showAll");
+	      listshowing=false;
+	     	      
 	  });
 	  
 
-	  $("#history").click(function() {
-	      $("#imghistory").toggleClass("turn");
-	  });
+	  // $("#history").click(function() {
+	  //     $("#imghistory").toggleClass("turn");
+	  // });
 
-	  $("#astronomy").click(function() {
-	      $("#imgastronomy").toggleClass("turn");
-	  });
-	  $("#physics").click(function() {
-	      $("#imgphysics").toggleClass("turn");
-	  });
-	  $("#computer").click(function() {
-	      $("#imgcomputer").toggleClass("turn");
-	  });
-	  $("#politics").click(function() {
-	      $("#imgpolitics").toggleClass("turn");
-	  });
-	  $("#life").click(function() {
-	      $("#imglife").toggleClass("turn");
-	  });
-	  $("#biology").click(function() {
-	      $("#imgbiology").toggleClass("turn");
-	  });
-	  $("#geography").click(function() {
-	      $("#imggeography").toggleClass("turn");
-	  });
-	  $("#english").click(function() {
-	      $("#imgenglish").toggleClass("turn");
-	  });
+	  // $("#astronomy").click(function() {
+	  //     $("#imgastronomy").toggleClass("turn");
+	  // });
+	  // $("#physics").click(function() {
+	  //     $("#imgphysics").toggleClass("turn");
+	  // });
+	  // $("#computer").click(function() {
+	  //     $("#imgcomputer").toggleClass("turn");
+	  // });
+	  // $("#politics").click(function() {
+	  //     $("#imgpolitics").toggleClass("turn");
+	  // });
+	  // $("#life").click(function() {
+	  //     $("#imglife").toggleClass("turn");
+	  // });
+	  // $("#biology").click(function() {
+	  //     $("#imgbiology").toggleClass("turn");
+	  // });
+	  // $("#geography").click(function() {
+	  //     $("#imggeography").toggleClass("turn");
+	  // });
+	  // $("#english").click(function() {
+	  //     $("#imgenglish").toggleClass("turn");
+	  // });
 
 	  $("#showAll").click(function(){
 	      if(listshowing) {
@@ -304,11 +404,13 @@
 		  return;
 	      }
 	      allQuestionShowedBefore=true;
+	      allQuestionContent=[];
+	      itemList=[];
 	      var str;
 	      if(chooseAll) str="SELECT number,question FROM tbquiz ";
-	      else  str = "SELECT number,question,answer FROM tbquiz  WHERE "+categoryCondition;
+	      else  str = "SELECT number,question,answer FROM tbquiz  WHERE category in ("+selectedCategoryIds.join(',')+")";
 	      var stringArr=["number","question","answer"];
-	      console.log("show all sql:"+str);
+	      //	      console.log("show all sql:"+str);
 	      askphp(str,stringArr,function(result){
 		  if(result[0]=="succeed"){
 		      result.shift(); // use shift() to remove the first element
@@ -339,7 +441,7 @@
 
 	  });
 	  $("#editit").click(function(){
-	      console.log("numberlist[i]:"+numberlist[i]);
+	      //console.log("numberlist[i]:"+numberlist[i]);
 	      var isEnglish=false;
 	      $.ajax({    //create an ajax request to load_page.php
 		  async: false,
@@ -350,7 +452,7 @@
 		  dataType: "json",   //expect html to be returned
 		  success: function(response){
 		      isEnglish=parseInt(response[0])>89;
-		      console.log("isEnglish:"+isEnglish);
+		      //		      console.log("isEnglish:"+isEnglish);
 		  },
 		  error: function(xhr, status, error){
 		      var errorMessage = xhr.status + ': ' + xhr.statusText;
@@ -378,8 +480,14 @@
 	<button type="button" id="showAll" class="btn btn-outline-primary">showAll</button>
 	<button type="button"  class="btn btn-outline-primary" id="editit" >Edit</button>	
 	<a href="editAddQuestion.html?mode=add" target="_blank">
-	  <button type="button"  class="btn btn-outline-primary">AddOne</button>
-	</a>
+    <button type="button"  class="btn btn-outline-primary">Add1</button>
+    
+</a>
+    	<a href="addTwoMoreQuestion.html" target="_blank">
+    <button type="button"  class="btn btn-outline-primary">Add2+</button>
+    
+</a>
+    
 	<a href="signadmin.html" target="_blank">
 	  <button type="button"  class="btn btn-outline-primary">Admin</button>
 	</a>
@@ -390,39 +498,17 @@
 	<span id="stats" style="float:right;"></span>
       </p>
 
-      <div class="row">
-	<form id="categoriesPics">
-	  <label for="history"><input type="checkbox" id="history" value="1"><img src="images/history.jpg" alt=""  id="imghistory" width="50" class="img"/></label>
-	  <label for="astronomy"><input type="checkbox" id="astronomy" value="1"><img src="images/astronomy.jpeg" alt=""  id="imgastronomy" class="img"/></label>
-	  <label for="physics"><input type="checkbox" id="physics" value="1"><img src="images/physics.jpg" alt=""  id="imgphysics" class="img" /></label>
-	  <label for="computer"><input type="checkbox" id="computer" value="1"><img src="images/computer.jpg" alt=""  id="imgcomputer" class="img"/></label>
-	  <label for="politics"><input type="checkbox" id="politics" value="1"><img src="images/politics.jpg" alt=""  id="imgpolitics" class="img"/></label>
-	  <label for="life">
-	    <input type="checkbox" id="life" value="1">
-	    <img src="images/life.jpg" alt=""  id="imglife" class="img"/>
-	  </label>
-	  <label for="biology">
-	    <input type="checkbox" id="biology" value="1">
-	    <img src="images/biology.jpg" alt=""  id="imgbiology" class="img"/>
-	  </label>
-	  <label for="geography">
-	    <input type="checkbox" id="geography" value="1">
-	    <img src="images/geography.jpeg" alt=""  id="imggeography" class="img"/>
-	  </label>
-	  <label for="english">
-	    <input type="checkbox" id="english" value="1">
-	    <img src="images/english.jpg" alt=""  id="imgenglish" class="img"/>
-	  </label>
-	  <div class="text-center bottomspace">
-	    <button  type="button" class="btn btn-success btn-lg" id="startThem"> Select Them! </button>
-	    <button  type="button" class="btn btn-warning btn-lg" id="startAll"> Select All! </button>
-	  </div>
+    <div class="row" id="select-and-click">
+      <div id="select-categories"> </div>
+       <div class="text-center bottomspace">
+	 <button  type="button" class="btn btn-success btn-lg" id="startThem"> Select Them! </button>
+	 <button  type="button" class="btn btn-warning btn-lg" id="startAll"> Select All! </button>
+       </div>
+    </div>
 
-	</form>
-      </div>
+  
 
       <div class="text-center"> <button  type="button" class="btn btn-success btn-lg" id="start1" > Choose Categories! </button> </div>
-      <div class="text-center"> <button  type="button" class="btn btn-success btn-lg" id="shuffleAndGo" > Questions are selected, lets start it! </button> </div>
 
       <div id="showlater">
 	<div class="text-center alert alert-info" id="question"> </div>
