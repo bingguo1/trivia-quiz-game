@@ -1,0 +1,23 @@
+history, cs, physics, astronomy, politics, health, chemistry, geography, english
+
+
+11 history 
+13  greek myth
+12 china history
+
+21 astronomy
+
+31 physics
+51 politics
+61 health
+81 geography
+
+14 only few
+15 only few, 
+16  only one, 马伯里诉麦迪逊案	
+41 cs 
+100  history timeline
+55  economy, only 1,
+2  an empty
+91 english, just a few : 5
+95 english

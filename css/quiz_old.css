@@ -57,12 +57,6 @@ img{
   /* border:2px solid green; */
 }
 
-
-#select-and-click, #start1, #showlater{
-    display:none;
-}
-
-
 #question{
   border:1px solid green;
 
@@ -93,39 +87,30 @@ position:relative;
 #bgdetail{
 
 }
-#answer{
-    white-space: pre-wrap;
-}
-#detail{
-    white-space: pre-wrap;
-}
 
 .eachQuestion{
 display:block; 
 
-}
-.eachAnswer{
-    white-space: pre-wrap;
 }
 
 .bottomspace{
   height:150px;
 
 }
-/* input[type=checkbox] { */
-/* //  border: 0px; */
-/* //        margin: 0px; */
-/* //        padding: 0px; */
-/* //  background-image: url('../images/history.jpg'); */
-/*   display: none; */
-/* //  background-repeat: no-repeat; */
-/* // background-position: center center; */
-/* //   background-size: 100% 100%; */
-/*  -webkit-appearance: none;    // this line is very necessary !!! */
-/* //  outline: 0; */
-/* //  height: 230px; */
-/* //  width: 49%; */
-/* } */
+input[type=checkbox] {
+//  border: 0px;
+//        margin: 0px;
+//        padding: 0px;
+//  background-image: url('../images/history.jpg');
+  display: none;
+//  background-repeat: no-repeat;
+// background-position: center center;
+//   background-size: 100% 100%;
+ -webkit-appearance: none;    // this line is very necessary !!!
+//  outline: 0;
+//  height: 230px;
+//  width: 49%;
+}
 
 /*  #imghistory,#imgastronomy,#imgphysics,#imgcomputer,#imgpolitics,#imggeography,#imglife,#imgbiology{ */
 /*   // width:100%; */

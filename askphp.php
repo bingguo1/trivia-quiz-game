@@ -18,7 +18,8 @@ if ($result){
     //     array_push($a,$row["number"]);
     //     $a=array("question问题","anser答案","detail细节");
     foreach($columnSets as $column ){
-	array_push($a, nl2br(stripcslashes($row[$column])));
+	//	array_push($a, nl2br(stripcslashes($row[$column])));
+	array_push($a, stripcslashes($row[$column]));
     }
   }
   echo json_encode($a);

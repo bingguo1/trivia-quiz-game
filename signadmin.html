@@ -7,7 +7,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>this is title</title>
+    <title> trivia quiz game</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
     <link rel="stylesheet" type="text/css" href="css/admin.css">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -100,7 +104,7 @@
 	    $("#signup").hide();
 	    $("#admin").hide();
 	    $("#signin").show();
-	    $("#advice").html("don't have an account?--->");
+	    $("#advice").html("don't have an account?");
 	    $("#switch").html("Sign Up");
 	}
 	else {
@@ -109,7 +113,7 @@
 	    $("#admin").show();
 	    $("#signup").hide();
 	    $("#signin").hide();
-	    $("#advice").html("Not You?---->");
+	    $("#advice").html("Not You?");
 	    $("#switch").html("Sign Out");
 
 	}
@@ -152,13 +156,18 @@
 	});  // switch click
 
 
-	$("#signinform").submit(function( event ) {
+	// $("#signinform").submit(function( event ) {
+	//     $("#info").hide();
+	//     var username=$("input#username1").val();
+	//     var password=$("input#password1").val();
+	//     validateaccount(username,password);
+	// }); //form.submit
+	$("#submit").click(function(){
 	    $("#info").hide();
 	    var username=$("input#username1").val();
 	    var password=$("input#password1").val();
 	    validateaccount(username,password);
-	}); //form.submit
-
+	});
 
 	$("#signupform").validate({
 	    rules:{
@@ -218,23 +227,29 @@
   </script>
   <body>
     <div class="container">
-
-      <div class="row" id="bar">
-	Hello, <span id="identity"> </span>
-	<span id="right"> <span id="advice"> </span> <button id="switch">   </button> </span>
-      </div>
-
-      <div class="row" id="signin">
-	<form  id="signinform"  action="javascript:void(0);"  method="post">
-          <fieldset>
-            <legend> Sign In </legend>
-            UserName: <br> <input type="text" id="username1" minlength=3 maxlength=20> <br>
-            Password: <br> <input type="password" id="password1"  minlength=5 maxlength=20> <br>
-            <input type="submit" value="Submit" id="submit"> <br>
-          </fieldset>
-	</form>
-      </div>
-
+   
+    <div class="float-start">
+      Hello, <span id="identity"> </span>
+    </div>
+    <div class="float-end">
+      <span id="advice"> </span> <button type="button"  class="btn btn-outline-primary" id="switch"> </button>
+    </div>
+    <br>
+    <div class="row" id="signin">
+      <h2>Sign In</h2>
+      <form action="javascript:void(0);" method="post">
+	<div class="mb-3 mt-3 w-25">
+	  <label for="username1">Username:</label>
+	  <input type="text" name="username1" class="form-control" placeholder="Enter Username" id="username1" minlength=3 maxlength=20>
+	</div>
+	<div class="mb-3 w-25">
+	  <label for="password1">Password:</label>
+	  <input type="password" class="form-control" id="password1" placeholder="Enter password" minlength=5 maxlength=20 name="pswd">
+	</div>
+	<button type="submit" id="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+    
       <div class="row" id="signup">
 	<form  id="signupform" action="signadmin.html" method="post">
           <fieldset>
