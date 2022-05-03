@@ -33,6 +33,13 @@
 
     <script src="js/myfunctions.js"> </script>
 
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css" integrity="sha384-KiWOvVjnN8qwAZbuQyWDIbfCLFhLXNETzBQjA/92pIowpC0d2O3nppDGQVgwd2nB" crossorigin="anonymous">
+
+    <!-- The loading of KaTeX is deferred to speed up page rendering -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js" integrity="sha384-0fdwu/T/EQMsQlrHCCHoH10pkPLlKA1jL5dFyUOvB3lfeT2540/2g6YgSi2BL14p" crossorigin="anonymous"></script>
+
+    <!-- To automatically render math in text elements, include the auto-render extension: -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/contrib/auto-render.min.js" integrity="sha384-+XBljXPPiv+OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR" crossorigin="anonymous"></script>
 
   </head>
 
@@ -41,8 +48,18 @@
     <script type="text/javascript">
 
       var allQuestionContent=[];
-      var allQuestionContentCopy=[];
+      //      var allQuestionContentCopy=[];
       var itemList=[];
+
+        let katex_opts={
+	  // customised options
+	  // • auto-render specific keys, e.g.:
+	  delimiters: [
+	      {left: '$$', right: '$$', display: true},
+	      {left: '$', right: '$', display: false},
+	      {left: '\\(', right: '\\)', display: false},
+	      {left: '\\[', right: '\\]', display: true}
+	  ]};
 
 function getAllSiblingInputs(elem, filter) {
     var sibs = [];
@@ -55,14 +72,15 @@ function getAllSiblingInputs(elem, filter) {
     } while (elem = elem.nextSibling)
     return sibs;
 }
-      function item(number1,question1,answer1,content1,showing1){
+      function item(number1,question1,answer1){
 	  this.number=number1;
 	  this.question=question1;
 	  this.answer=answer1;
-	  this.showcontent=content1;
-	  this.showing=showing1;
+//	  this.showcontent=content1;
+//	  this.showing=showing1;
       }
 
+      
       function shuffle(array) {
 	  var currentIndex = array.length, temporaryValue, randomIndex;
 
@@ -94,25 +112,67 @@ function getAllSiblingInputs(elem, filter) {
 	  });   // ajax
       }
 
-      function clickitem(i){
-	  var questionHTML="<button class='eachQuestion' type='button' onclick='clickitem( " +i+")'>" + itemList[i].question +"</button>";
-	  var answerHTML="<div class='eachAnswer'>" + itemList[i].answer +"</div>";
+      function clickitem(i, event){
+	  //var questionHTML="<button class='eachQuestion' type='button' onclick='clickitem( " +i+")'>" + itemList[i].question +"</button>";
+	  //var answerHTML="<div class='eachAnswer'>" + itemList[i].answer +"</div>";
 
-	  if(itemList[i].showing) {
-	      itemList[i].showing=false;
-	      itemList[i].showcontent=questionHTML;
-	      allQuestionContent[i]=questionHTML;
+	  //	  console.log("clicked it",i, event.target.nextElementSibling, event.target.nextElementSibling.nextElementSibling);
+	  let answer=event.target.nextElementSibling.nextElementSibling;
+	  if(answer){
+	      answer.remove();
+	  }else{
+	      answer = document.createElement("div");
+	      answer.innerText=itemList[i].answer;
+	      answer.setAttribute("class","eachAnswer");
+	      event.target.parentNode.append(answer);
+	      renderMathInElement(answer, katex_opts);
 	  }
-	  else {
-	      itemList[i].showing=true;
-	      itemList[i].showcontent=questionHTML + answerHTML;
-	      allQuestionContent[i]=questionHTML+answerHTML;
-	  }
+	  // if(itemList[i].showing) {
+	  //     itemList[i].showing=false;
+	  //     itemList[i].showcontent=questionHTML;
+	  //     allQuestionContent[i]=questionHTML;
+	  // }
+	  // else {
+	  //     itemList[i].showing=true;
+	  //     itemList[i].showcontent=questionHTML + answerHTML;
+	  //     allQuestionContent[i]=questionHTML+answerHTML;
+	  // }
 
-	  $("#allQuestionsHere").html(allQuestionContent);
+	  // $("#allQuestionsHere").html(allQuestionContent);
 
 
       }
+
+      function editItem(i){
+	   var isEnglish=false;
+	      $.ajax({    //create an ajax request to load_page.php
+		  async: false,
+		  global: false,
+		  data: {number: itemList[i].number},
+		  type: "POST",
+		  url: "getCategory.php",
+		  dataType: "json",   //expect html to be returned
+		  success: function(response){
+		      isEnglish=parseInt(response[0])==900;
+		      //		      console.log("isEnglish:"+isEnglish);
+		  },
+		  error: function(xhr, status, error){
+		      var errorMessage = xhr.status + ': ' + xhr.statusText;
+		      console.log(" error comming .....");
+		      alert('Error - ' + errorMessage + ' status:' + status + ' error:' + error);
+		  }
+	      });   // ajax
+	      window.open(
+		  'editAddQuestion.html?number='+itemList[i].number+'&mode=edit&isEnglish='+isEnglish,
+		  '_blank' // <- This is what makes it open in a new window.
+	      );
+	  
+      }
+
+      
+
+
+
 
       $(document).ready(function() {
 	  var total;
@@ -132,6 +192,8 @@ function getAllSiblingInputs(elem, filter) {
 	      $("#username").html(getit("signinUser"));
 	  }
 
+	  $("#expand-collapse").hide();
+	  var allCollapsed=true;
 	  
 	  if(Cookies.get("categorylist")) categorylist=JSON.parse(Cookies.get("categorylist"));
 	  //console.log("categorylist:",categorylist);
@@ -353,8 +415,16 @@ function getAllSiblingInputs(elem, filter) {
 
 	  $("#showAnswer").click(function() {
 	      $("#answer").html(currentSet[1]);
+	      //let x = document.getElementById("answer");
+	      //console.log(currentSet[1]);
+	      //x.innerHTML = currentSet[1]; //"$$ p(X)=\\frac{e^{\\beta_{0} +\\beta_{1}X}}{1 + e^{\\beta_{0}+\\beta_{1}X}} $$";
 	      $("#detail").html("<hr>"+currentSet[2]);
 
+	      renderMathInElement(document.getElementById("answer"), katex_opts);
+	      //var y = document.getElementById("equation");
+	      //y.innerHTML = " \\( p(X)=\frac{e^{\beta_{0} +\beta_{1}X}}{1 + e^{\beta_{0}+\beta_{1}X}} \\)";
+	      //y.innerHTML = "  $  \\beta_{0}   $";
+	      //renderMathInElement(y, opts);
 	  });
 	  
 	  
@@ -365,6 +435,7 @@ function getAllSiblingInputs(elem, filter) {
 	      else $("#select-and-click").show();
 	      allQuestionShowedBefore=false;
 	      $("#allQuestionsHere").html("");
+	      $("#expand-collapse").hide();
 	      $("#showAll").html("showAll");
 	      listshowing=false;
 	     	      
@@ -399,19 +470,24 @@ function getAllSiblingInputs(elem, filter) {
 	  // $("#english").click(function() {
 	  //     $("#imgenglish").toggleClass("turn");
 	  // });
-
+	  
 	  $("#showAll").click(function(){
 	      if(listshowing) {
 		  listshowing=false;
-		  $("#allQuestionsHere").html("");
+		  //$("#allQuestionsHere").html("");
+		  $("#expand-collapse").hide();
+		  $("#allQuestionsHere").hide();
 		  $(this).html("showAll");
 		  return;
 	      }
 	      else if(allQuestionShowedBefore){
-		  allQuestionContent=allQuestionContentCopy.slice();   // in javascript, arr1=arr2 will only create a reference to  arr2, how arr1 change will affect arr2
+		  //allQuestionContent=allQuestionContentCopy.slice();   // in javascript, arr1=arr2 will only create a reference to  arr2, how arr1 change will affect arr2
 		  $(this).html("hideAll");
 		  listshowing=true;
-		  $("#allQuestionsHere").html(allQuestionContent);
+		  //$("#allQuestionsHere").html(allQuestionContent);
+		  $("#expand-collapse").show();
+		  $("#allQuestionsHere").show();
+	
 		  return;
 	      }
 	      allQuestionShowedBefore=true;
@@ -435,22 +511,26 @@ function getAllSiblingInputs(elem, filter) {
 			  question=result[3*i+1];
 			  answer=result[3*i+2];
 			  
-			  oneButtonHTML="<button class='eachQuestion' type='button' onclick='clickitem( " +i+")'>" + question +"</button>";
-			  oneitem=new item(number,question,answer,oneButtonHTML,false)
+			  oneButtonHTML="<div class='eachItem' data-key="+i+"> <button class='eachQuestion' type='button' onclick='clickitem( " +i+", event)'>" + question +"</button> <button onclick='editItem( " +i+")'> Edit </button> </div>";
+			  oneitem=new item(number,question,answer);
 			  itemList.push(oneitem);
 			  allQuestionContent.push(oneButtonHTML);
 		      }
-		      allQuestionContentCopy=allQuestionContent.slice();
+		      //allQuestionContentCopy=allQuestionContent.slice();
 		      $("#allQuestionsHere").html(allQuestionContent);
 		  }else{
 		      alert(result);
 		  }
 	      }); // askphp
 	      $(this).html("hideAll");
+	      $("#expand-collapse").show();
 	      listshowing=true;
 
 
 	  });
+
+
+	  
 	  $("#editit").click(function(){
 	      //console.log("numberlist[i]:"+numberlist[i]);
 	      var isEnglish=false;
@@ -476,11 +556,27 @@ function getAllSiblingInputs(elem, filter) {
 		  '_blank' // <- This is what makes it open in a new window.
 	      );
 	  });
-	  
-	  
+
+	  $("#expand-collapse-button").click(function(){
+	      if(allCollapsed){
+		  allCollapsed=false;
+		  $(this).html("Collapse All");
+		  $("#allQuestionsHere .eachItem").each(function(){
+		      //console.log("key:",$(this).data("key"));
+		      //console.log("length:",$(this).children().length);
+		      if($(this).children().length==2){
+			  $(this).append("<div class='eachAnswer'>"+itemList[$(this).data("key")].answer+"</div>");
+		      }
+		  });
+		  
+	      }else{
+		  allCollapsed=true;
+		  $("#allQuestionsHere .eachAnswer").remove();
+		  $(this).html("Expand All");
+	      }
+	  });
 
       });  // ready
-
 
       </script>
 
@@ -535,8 +631,11 @@ function getAllSiblingInputs(elem, filter) {
 	</div>
       </div>
 
+      <div id="expand-collapse">
+	<button type="button" id="expand-collapse-button" class="btn btn-outline-primary">Expand All</button>
+      </div>
       <div id="allQuestionsHere" class="row">  </div>
-
+      <div style="height:100px"></div>
     </div>
 
 </div>

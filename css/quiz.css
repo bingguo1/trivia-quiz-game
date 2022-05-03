@@ -101,7 +101,7 @@ position:relative;
 }
 
 .eachQuestion{
-display:block; 
+    width: 96%;
 
 }
 .eachAnswer{
