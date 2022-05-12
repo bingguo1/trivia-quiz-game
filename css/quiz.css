@@ -74,8 +74,8 @@ position:relative;
 
 }
 
-#bgquestion{
-
+#question{
+    white-space: pre-wrap;
 }
 
 #chooseCategory{
@@ -101,8 +101,11 @@ position:relative;
 }
 
 .eachQuestion{
-    width: 96%;
-
+    width: 95%;
+    white-space: pre-wrap;
+}
+.eachEditButton{
+    width: 3%;
 }
 .eachAnswer{
     white-space: pre-wrap;

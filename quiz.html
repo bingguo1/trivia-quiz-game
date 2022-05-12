@@ -511,7 +511,7 @@ function getAllSiblingInputs(elem, filter) {
 			  question=result[3*i+1];
 			  answer=result[3*i+2];
 			  
-			  oneButtonHTML="<div class='eachItem' data-key="+i+"> <button class='eachQuestion' type='button' onclick='clickitem( " +i+", event)'>" + question +"</button> <button onclick='editItem( " +i+")'> Edit </button> </div>";
+			  oneButtonHTML="<div class='eachItem' data-key="+i+"> <button class='eachQuestion' type='button' onclick='clickitem( " +i+", event)'>" + question +"</button> <button class='eachEditButton' onclick='editItem( " +i+")'> Edit </button> </div>";
 			  oneitem=new item(number,question,answer);
 			  itemList.push(oneitem);
 			  allQuestionContent.push(oneButtonHTML);
@@ -568,6 +568,7 @@ function getAllSiblingInputs(elem, filter) {
 			  $(this).append("<div class='eachAnswer'>"+itemList[$(this).data("key")].answer+"</div>");
 		      }
 		  });
+		  renderMathInElement(document.getElementById("allQuestionsHere"), katex_opts);
 		  
 	      }else{
 		  allCollapsed=true;
@@ -617,7 +618,7 @@ function getAllSiblingInputs(elem, filter) {
       <div class="text-center"> <button  type="button" class="btn btn-success btn-lg" id="start1" > Choose Categories! </button> </div>
 
       <div id="showlater">
-	<div class="text-center alert alert-info" id="question"> </div>
+	<div class="text-center alert alert-info" id="question"></div>
 	<div class="row" id="buttons">
     <button  class="btn btn-success col-sm-4" type="button" id="preQuestion" > <i class="fa-solid fa-angles-left"></i> (Prev) </button>
 	  <button  class="btn btn-warning col-sm-4" type="button" id="showAnswer" > Show Answer </button>

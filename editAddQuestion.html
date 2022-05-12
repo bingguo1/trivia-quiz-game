@@ -95,7 +95,7 @@
 	    $('#detail').css("height","50px");
 	}
 	else
-	    $('#detail').richText();
+	    $('#detail').richText({height:"180"});
 	if(searchParams.get('mode')=="edit"){
 	    //	    var number=getit("number");
 	    var str = "SELECT category,question,answer,detail FROM tbquiz  WHERE number="+number;
@@ -142,7 +142,7 @@
 		    // console.log("response:"+response);
 		    $("#succeed").fadeIn();
 		    if(searchParams.get('mode')=="edit"){
-			window.location.href = "https://barney.physics.sc.edu/~bing/web/ipage/gate/quiz/quiz.html";
+			window.location.href = "quiz.html";
 		    }else{
 			$("#question").val("");
 			$("#answer").val("");
@@ -177,11 +177,12 @@
 	</select>
 	<br>
         Question: <br>
-        <textarea name="question" id="question" rows="1"> </textarea> <br>
-        Answer: <br>
-        <textarea name="answer"  id="answer" >   </textarea> <br>
+        <textarea name="question" id="question" rows="2"></textarea> <br>
+    Answer: <br>
+    <!--- no space between textarea, or when you edit, you wont start from the beginning  --->
+        <textarea name="answer"  id="answer" ></textarea> <br>
         Detail: <br>
-        <textarea name="detail"  id="detail">   </textarea> <br>
+        <textarea name="detail"  id="detail"></textarea> <br>
     <input type="submit" value="Add It!" id="submit-button">
     <span id="succeed"> succeeded </span>
     <span id="fail"> failed </span>
