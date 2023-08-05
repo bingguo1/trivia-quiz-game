@@ -1,0 +1,46 @@
+<!-- before game start: signin, signup/ logout, home, add1, add2
+after game start: quit, showall, edit, home
+sigin/signup/logout ----- quit, edit
+home, add -----------------home, showall -->
+
+<div id="topBar" style="margin-left: -13px; margin-right: -13px;">
+    <span>
+        <a href="/">
+            <button type="button" class="btn btn-primary btn-sm">HOME</button>
+        </a>
+        <span id="navbar_left1">
+            <a href="/editAddQuestion.html?mode=add">
+                <button type="button" class="btn btn-outline-primary btn-sm">Add</button>
+            </a>
+            <!-- <a href="addTwoMoreQuestion.html" target="_blank">
+                <button type="button" class="btn btn-outline-primary">Add2+</button>
+            </a> -->
+        </span>
+        <span id="navbar_left2">
+            <button type="button" id="showAll" class="btn btn-outline-primary">showAll</button>
+        </span>
+    </span>
+
+    <span id="stats"></span>
+    
+    <span class="float-end" id="navbar_right2">
+        <button type="button" class="btn btn-danger" id="giveup">QUIT</button>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="editit">Edit</button>
+    </span>
+    <span class="float-end" id="navbar_right1" style="display:none;">
+        <span style="text-align:left;">
+            <span id="nav_username"></span>
+        </span>
+        <a href="signin.html" id="signin_button">
+            <button type="button" class="btn btn-outline-primary btn-sm" >SignIn</button>
+        </a>
+        <a href="signup.html" id="signup_button">
+            <button type="button" class="btn btn-outline-primary btn-sm">SignUp</button>
+        </a>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="logout_button" style="display: none;">Logout</button>
+
+        <!-- <a href="signin.html" target="_blank"> -->
+    </span>
+    
+
+</div>

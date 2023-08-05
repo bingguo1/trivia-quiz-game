@@ -1,0 +1,129 @@
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+body {
+    line-height: 1;
+}
+ol, ul {
+    list-style: none;
+}
+blockquote, q {
+    quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: '';
+    content: none;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+
+form,label,input{
+margin:0;
+padding:0;
+/* border:1px solid red; */
+
+}
+
+img{
+  margin:0;
+  padding:0;
+
+  /* border:2px solid green; */
+}
+
+#question{
+  border:1px solid green;
+
+}
+
+.row{
+// border: 1px solid purple;
+position:relative;
+
+}
+
+#bgquestion{
+
+}
+
+#chooseCategory{
+
+}
+
+#start3{
+
+}
+
+#bganswer{
+
+}
+
+#bgdetail{
+
+}
+
+.eachQuestion{
+display:block; 
+
+}
+
+.bottomspace{
+  height:150px;
+
+}
+input[type=checkbox] {
+//  border: 0px;
+//        margin: 0px;
+//        padding: 0px;
+//  background-image: url('../images/history.jpg');
+  display: none;
+//  background-repeat: no-repeat;
+// background-position: center center;
+//   background-size: 100% 100%;
+ -webkit-appearance: none;    // this line is very necessary !!!
+//  outline: 0;
+//  height: 230px;
+//  width: 49%;
+}
+
+/*  #imghistory,#imgastronomy,#imgphysics,#imgcomputer,#imgpolitics,#imggeography,#imglife,#imgbiology{ */
+/*   // width:100%; */
+/* } */
+
+[id^="img"]{
+  width:160px;
+  height:160px;
+}
+label{
+//  width:50%;
+}
+
+.turn{
+  opacity: 0.5;
+}

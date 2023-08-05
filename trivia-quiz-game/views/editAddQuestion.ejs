@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('partials/head') %>
+    <link rel="stylesheet" type="text/css" href="css/admin.css">
+    <link rel="stylesheet" type="text/css" href="css/addquestion.css">
+  
+    
+        <!-- <script src="//cdn.ckeditor.com/4.5.11/full/ckeditor.js"></script>
+      
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <link rel="stylesheet" href="RichText/src/richtext.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+        <script src="RichText/src/jquery.richtext.min.js"></script> -->
+        <!-- <link rel="stylesheet" href="RichText/src/richtext.min.css">
+        <script src="RichText/src/jquery.richtext.min.js"></script> -->
+<!-- 
+        <script src="https://cdn.jsdelivr.net/npm/froala-editor@4.1.0/js/froala_editor.min.js"></script>
+            <link href="https://cdn.jsdelivr.net/npm/froala-editor@4.1.0/css/froala_style.min.css" rel="stylesheet"> -->
+
+            <!-- <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script> -->
+            <script src="https://cdn.tiny.cloud/1/lfrf3824f6qyiu2ce95o5nkdvmb3am44l92541xy1k1mdkuy/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@tinymce/tinymce-jquery@1/dist/tinymce-jquery.min.js"></script>
+            <!-- <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script> -->
+
+
+</head>
+
+<body>
+    <script>
+        
+
+        function askphp(queryString, columnSets, callback) {
+            $.ajax({    //create an ajax request to load_page.php
+                async: true,
+                global: false,
+                data: { queryString: queryString, columnSets: columnSets },
+                type: "POST",
+                url: "askphp.php",
+                dataType: "json",   //expect html to be returned
+                success: callback,
+                sameSite: 'none',
+            });   // ajax
+        }
+
+        function fillCategories() {
+            if (localStorage.getItem("categorylist")) {
+                
+                let node = "";
+                let categorylist = JSON.parse(localStorage.getItem("categorylist"));
+                console.log(`======= categorylist:${categorylist}`);
+                categorylist.forEach(category=>{
+                    node += `<option value='${category.categoryId}'>${category.name} (${category.categoryId})</option>`;
+                });
+                //for (let [key, value] of Object.entries(categorylist)) {
+                    //		console.log(`${key}: ${value}`);
+                //    node += `<option value='${key}'>${value}</option>`;
+                //}
+                $("#category").append(node);
+            }
+
+        }
+
+        $(function () {
+            navbar_init(true, false);
+            // https://github.com/webfashionist/RichText
+            // https://stackoverflow.com/questions/19491336/how-to-get-url-parameter-using-jquery-or-plain-javascript
+            // $("#greet").append(getit("signinUser"));
+            fillCategories();
+            var questionId;
+            let searchParams = new URLSearchParams(window.location.search);
+            var englishMode = false;
+            var number;
+            var sqlmode;
+            var selector, mce_height;
+            if (searchParams.get('mode') == "edit") {
+                sqlmode = "update";
+                $("#submit-button").attr("value", "Change it");
+                //number = localStorage.getItem("number");
+                number=searchParams.get("number");
+                console.log(` start to edit number: ${number}`);
+            } else {
+                sqlmode = "insert";
+            }
+            if (searchParams.get('mode') == "edit" && searchParams.get('isEnglish') == "true") {
+                englishMode = true;
+                mce_height=150;
+                // $('#question').richText({ height: "150" });   
+                selector= 'textarea#question';
+                $('#detail').css("height", "50px");   
+            }else{
+                selector ="textarea#detail";
+                mce_height=500;
+            }
+            if (searchParams.get('mode') == "edit") {
+                console.log("start to get the quiz for this number to edit");
+                //	    var number=getit("number");
+                $.ajax({    //create an ajax request to load_page.php
+                    data: { questionId: number },
+                    type: "POST",
+                    url: "/getOneQuiz",
+                    dataType: "json",   //expect html to be returned
+                }).done(res=>{
+                    questionId = res.result.questionId;
+                    question= res.result.question;
+                    answer= res.result.answer;
+                    detail= res.result.detail;
+                    category=res.result.categoryId;
+                    //if(answer) answer = convert2break(answer);
+                    //if(detail) detail = convert2break(detail);
+                    //question = convert2break(question);
+                    $("#category").val(category);
+                    $("#answer").val(answer);
+                    let mce_content;
+                    if(englishMode===true) {
+                        $("#detail").val(detail); //.trigger("change");        
+                        mce_content = question;
+                    }else{
+                        console.log("not english mode ")
+                        $("#question").val(question); //.trigger("change");
+                        mce_content= detail;
+                    }
+                    ////// you need to do setContent after tinyMCE initialized
+                    ////// you need to do setContent after tinyMCE initialized
+                    tinymce.init({
+                        selector: selector,
+                        height: mce_height,
+                        menubar: false,
+                        plugins: [
+                           'a11ychecker','advlist','advcode','advtable','autolink','checklist','export',
+                           'lists','link','image','charmap','preview','anchor','searchreplace','visualblocks',
+                           'powerpaste','fullscreen','formatpainter','insertdatetime','media','table','help','wordcount'
+                        ],
+                        toolbar: 'undo redo | a11ycheck casechange blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist checklist outdent indent | removeformat | code table help',
+                        init_instance_callback : function(editor) {
+                            editor.setContent(mce_content);
+                          }
+                    });
+                    
+                });
+            } else {
+                if (localStorage.getItem("previousCategory")) {
+                    $("#category").val(localStorage.getItem("previousCategory"));
+                }
+                tinymce.init({
+                    selector: selector,
+                    height: mce_height,
+                    menubar: false,
+                    plugins: [
+                       'a11ychecker','advlist','advcode','advtable','autolink','checklist','export',
+                       'lists','link','image','charmap','preview','anchor','searchreplace','visualblocks',
+                       'powerpaste','fullscreen','formatpainter','insertdatetime','media','table','help','wordcount'
+                    ],
+                    toolbar: 'undo redo | a11ycheck casechange blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist checklist outdent indent | removeformat | code table help',
+                });
+            }
+            
+                
+
+            $("#form1").submit(function (e) {
+                console.log(`start to submit ===================== `)
+                $("#question").trigger("change");
+                $("#detail").trigger("change");
+                var category = $("#category").val();
+                var answer = $("#answer").val();
+                var detail, question;
+                if(englishMode==true){
+                    question=tinymce.get("question").getContent();
+                    detail = $("#detail").val();
+                }else{
+                    detail = tinymce.get("detail").getContent();
+                    question = $("#question").val().trim();
+
+                }
+                if (category == "" || question.trim() == "" || answer.trim() == "") return;
+                const senddata={ sqlmode: sqlmode, number: number, category: category, question: question, answer: answer, detail: detail, questionId: questionId };
+                console.log(`send data: ${senddata}`);
+                $.ajax({    //create an ajax request to load_page.php
+                    data: senddata,
+                    type: "POST",
+                    url: "/updateAddQuestion",
+                    dataType: "json",   //expect html to be returned
+                    success: function (response) {
+                        if(response.result=='succeed'){
+                            console.log("result ------------ succeed");
+                            $("#succeed").fadeIn();
+                            if (searchParams.get('mode') == "edit") {
+                                window.location.href = "/";
+                            } else {
+                                $("#question").val("");
+                                $("#answer").val("");
+                                $("#detail").val("");
+                                $("#succeed").fadeOut();
+                            }
+                        }else{
+                            console.log("add/update question failed.........")
+                        }
+
+                    }
+                });   // ajax
+                //    e.preventDefault();
+                localStorage.setItem("previousCategory", category);
+
+            });
+
+
+        });  //ready
+    </script>
+
+
+    <div class="container-md">
+
+        <%- include('partials/navbar') %>
+            <div>
+                <form id="form1" method="post" action="javascript:void(0);">
+                    <label for="category">Select Category</label>
+                    <select name="categories" id="category">
+                    </select>
+                    <br>
+                    Question: <br>
+                    <textarea name="question" id="question" rows="2"></textarea> <br>
+                    Answer: <br>
+                    <!--- no space between textarea, or when you edit, you wont start from the beginning  --->
+                    <textarea name="answer" id="answer"></textarea> <br>
+                    Detail: <br>
+                    <textarea name="detail" id="detail"></textarea> <br>
+                    <input type="submit" value="Add Another!" id="submit-button">
+                    <span id="succeed"> succeeded </span>
+                    <span id="fail"> failed </span>
+                </form>
+            </div>
+
+
+    </div>
+</body>

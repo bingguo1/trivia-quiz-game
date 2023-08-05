@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <title>trivia quiz game</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
+    
+    <!-- <link rel="stylesheet" type="text/css" href="css/admin.css"> -->
+  <link rel="stylesheet" type="text/css" href="css/addtwomorequestion.css">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/additional-methods.min.js"></script>
+  
+  <script src="js/myfunctions.js"> </script>
+  <!-- <script src="//cdn.ckeditor.com/4.5.11/full/ckeditor.js"></script> -->
+  <!-- <script src="https://cdn.ckeditor.com/4.17.1/standard/ckeditor.js"></script> -->
+
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> -->
+  <!-- <link rel="stylesheet" href="RichText/src/richtext.min.css"> -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script> -->
+  <!-- <script src="RichText/src/jquery.richtext.min.js"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@3/dist/js.cookie.min.js"></script>
+
+  
+</head>
+
+<body>
+  <script>
+
+var nForm=2;
+  if(getit("signinUser")=="undefined" || getit("signinUser")==""){
+    window.location.href="signadmin.html";  /////跳转到另一页面
+  }
+  // else if(getit("number")=="undefined"){
+
+  //   window.location.href="quiz.html";  /////跳转到另一页面
+  // }
+
+
+  function askphp(queryString,columnSets,callback){
+      $.ajax({    //create an ajax request to load_page.php
+	  async: true,
+	  global: false,
+	  data: {queryString: queryString,columnSets: columnSets},
+	  type: "POST",
+	  url: "askphp.php",
+	  dataType: "json",   //expect html to be returned
+	  success: callback
+      });   // ajax
+  }
+
+    function fillCategories(){
+	if(Cookies.get("categorylist")) {
+	    let node="";
+	    let categorylist=JSON.parse(Cookies.get("categorylist"));
+	    for (let [key, value] of Object.entries(categorylist)) {
+		//console.log(`${key}: ${value}`);
+		node+=`<option value='${key}'>${value}</option>`;
+	    }
+	    $(".category").append(node);
+
+	}
+	if(Cookies.get("previousCategory")) {
+	    $(".category").val(Cookies.get("previousCategory"));
+	}
+	
+    }
+    
+    $(function(){
+	// https://github.com/webfashionist/RichText
+	// https://stackoverflow.com/questions/19491336/how-to-get-url-parameter-using-jquery-or-plain-javascript
+	$("#greet").append(getit("signinUser"));
+	fillCategories();
+
+	const cleanForm=$(".form").first().clone();
+
+	
+	
+	let sqlmode="insert";		
+   
+	$("#add-two-button").click(function(){
+	    $("#formlist").append(cleanForm.clone());
+	    $("#formlist").append(cleanForm.clone());
+	    let value=$(".category").first().val();
+	    $(".category").eq(nForm).val(value); 
+	    $(".category").eq(nForm+1).val(value);
+	    nForm+=2;
+	    
+	});
+
+	$("#submit-button").click(function(){
+	    let nAddSucceeded=0;
+	    
+	    $(".form").each(function(){
+//		console.log("2th:",obj.children('select.category').val());
+//		console.log("5th:",obj.children('textarea.question').val());
+		//		console.log("7th:",obj.children('textarea.answer').val());
+		let catNode=$(this).children('select.category');
+		let questionNode=$(this).children('textarea.question');
+		let answerNode=$(this).children('textarea.answer');
+		let selectedCat=catNode.val();
+		let question=questionNode.val().trim();
+		let answer=answerNode.val().trim();
+
+		if(selectedCat=="" || question=="" || answer=="") return;
+		Cookies.set("previousCategory",selectedCat );
+		$(this).css("background","green");
+		let formNode=$(this);
+		//		console.log("start to submit");
+		$.ajax({    //create an ajax request to load_page.php
+		    async: true,
+		    global: false,
+		    data: { sqlmode: sqlmode,category: selectedCat, question: question, answer:answer},
+		    type: "POST",
+		    url: "updateAddQuestion.php",
+		    dataType: "json",   //expect html to be returned
+		    success: function(response){
+			//			console.log("response:"+response);
+			let node=$("<span></span>").text("Succeeded add one!");
+			$(".container").append(node);
+			node.fadeOut(2000);			
+			questionNode.val("");
+			answerNode.val("");
+			formNode.css("background","none");
+			nAddSucceeded+=1;
+			///node.remove();
+			
+		    },
+		    error: function(xhr, status, error){
+			var errorMessage = xhr.status + ': ' + xhr.statusText;
+			console.log(" error comming .....");
+			alert('Error - ' + errorMessage + ' status:' + status + ' error:' + error);
+		    }
+		});   // ajax
+		
+		
+	    });// form each
+	    
+	}); // click
+
+
+
+  });  //ready
+  </script>
+
+
+  <div class="container">
+    <div class="row">
+      <div>
+      <a href="signadmin.html"> <button type="button"  class="btn btn-primary">Back to Admin</button> </a>
+    <a href="quiz.html"> <button type="button"  class="btn btn-primary">Back to Quiz</button></a>
+    <span id="greet" style="float:right;">Hi! </span>
+    </div>
+    </div>
+    <div class="row">
+      <button type="button"  class="btn btn-outline-warning mx-2" id="add-two-button">Add two more questions</button>
+    </div>
+    <div class="row" id="formlist">
+      <div class="col-md-6 form">
+	<label for="category">Select Category</label>
+	<select name="categories" class="category">
+	</select>
+	<br>
+        Question: <br>
+        <textarea name="question" class="question" rows="1"> </textarea> <br>
+        Answer: <br>
+        <textarea name="answer"  class="answer" >   </textarea> <br>
+      </div>
+       <div class="col-md-6 form">
+	<label for="category">Select Category</label>
+	<select name="categories" class="category">
+	</select>
+	<br>
+        Question: <br>
+        <textarea name="question" class="question" rows="1"> </textarea> <br>
+        Answer: <br>
+        <textarea name="answer"  class="answer" >   </textarea> <br>
+       </div>
+    </div>
+    <input type="submit" value="Add them!" id="submit-button">
+    <span id="info"> </span>
+
+
+
+  </div>
+</body>

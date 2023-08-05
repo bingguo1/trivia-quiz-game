@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('partials/head') %>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+</head>
+<script>
+    async function adduser(info) {
+        console.log(`========== info: ${info}`);
+        // var arr;
+        await $.ajax({    //create an ajax request to load_page.php
+            // async: false,
+            // global: false,
+            data: info,
+            type: "POST",
+            url: "/register",
+            //  dataType: "json",   //expect html to be returned
+        });   // ajax
+    }
+    $(document).ready(function () {
+        navbar_init();
+        const is_registration_open = true;
+        $("#signupform").submit(function (e) {
+            e.preventDefault();
+        }).validate({
+            rules: {
+                username: {
+                    required: true,
+                    minlength: 3,
+                    maxlength: 20,
+                },
+                password: {
+                    required: true,
+                    minlength: 5,
+                },
+                repassword: {
+                    required: true,
+                    equalTo: "#password",
+                },
+                email: {
+                    required: true,
+                    email: true,
+                }
+            },// rules  // dont' omit this comma
+            submitHandler: function (form) {
+                console.log(" ======== start to submit");
+                if (!is_registration_open) {
+                    $("#info").html("Sorry, user registration stopped");
+                    $("#info").fadeIn();
+                    return;
+                }
+
+                $("#info").hide();
+                // var info = [$("#realname").val(), $("#username").val(), $("#password").val(), $("#email").val(), $("#interests").val()];
+                const info = {
+                    username: $("#username").val(),
+                    password: $("#password").val(),
+                    email: $("#email").val(),
+                    interests: $("#interests").val()
+                }
+                console.log(`info username: ${info.username}`);
+                $.ajax({    //create an ajax request to load_page.php
+                    // async: false,
+                    // global: false,
+                    data: info,
+                    type: "POST",
+                    url: "/register",
+                })
+                    .done(res => {
+                        console.log(`res: ${Object.keys(res)}`);
+                        result = res.result;
+                        if (result == "succeed") {
+                            // setit("signinUser", $("#username").val());
+                            $("#info").html("You created an account successfully!");
+                            $("#info").fadeIn(2000).animate({ fontSize: '4em' }, 2000, function () {
+                                //form.submit();
+                                window.location.href = "/";
+                            });
+                        }
+                        else if (result == "overlap") {
+                            $("#info").html("Sorry, this username is not available, please create a new one!");
+                            $("#info").fadeIn();
+                        }
+                        else {
+                            $("#info").html("Sorry, there's something wrong, Please recreate your account!");
+                            $("#info").fadeIn();
+                        }
+                    }).fail(err => {
+                        console.log(err);
+                    })
+
+                console.log("end of adding user");
+                //  $("#test2").html(result);
+                //		console.log(result);
+                //console.log("the first:"+result[0]);
+            } // submitHandler
+        }); //validate
+    });
+</script>
+
+<body>
+    <div class="container-md">
+
+        <%- include('partials/navbar') %>
+
+            <div class="row" id="signup">
+                <form id="signupform" method="post">
+                    <fieldset>
+                        <legend> Sign Up </legend>
+                        UserName: <br> <input type="text" id="username" name="username" minlength=3 maxlength=20> <br>
+                        Password: <br> <input type="password" id="password" name="password" minlength=5 maxlength=20> <br>
+                        Retype Password: <br> <input type="password" id="repassword" name="repassword"> <br>
+                        Email Address:<br> <input type="email" id="email" name="email"> <br>
+                        Field of Interests:<br> <input type="text" id="interests" name="interests"> <br>
+                        <input type="submit" value="Submit"> <br>
+                    </fieldset>
+                </form>
+            </div>
+            <div id="info"> </div>
+
+
+    </div>
+
+
+
+
+</body>

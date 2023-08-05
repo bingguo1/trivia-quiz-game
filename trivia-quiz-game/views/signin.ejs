@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('partials/head') %>
+</head>
+
+<script>
+    function validateaccount(username, password) {
+        $.ajax({    //create an ajax request to load_page.php
+            data: { username: username, password: password },
+            type: "POST",
+            url: "/signin",
+            dataType: "json",   //expect html to be returned
+            success: function (response) {
+                result = response.result;
+                if (result == "succeed") {
+                    console.log("succeed -------->response:" + result);
+                    $("#info").html("");
+                    // setit("signinUser", username);
+                    console.log("username:" + username);
+                    window.location.href = "/";
+                    // window.location.href = "https://barney.physics.sc.edu/~bing/web/ipage/gate/quiz/quiz.html";
+                }
+                else {
+                    console.log("failed ------> response:" + result);
+                    var word = "Sorry, your username and password combination is not correct,please retype.";
+                    $("#info").html(word);
+                    $("#info").fadeIn();
+                }
+
+            },
+            error: function (xhr, status, error) {
+                var errorMessage = xhr.status + ': ' + xhr.statusText;
+                console.log(" error comming .....");
+                alert('Error - ' + errorMessage + ' status:' + status + ' error:' + error);
+            }
+        });   // ajax
+    }
+
+    $(document).ready(function () {
+        navbar_init();
+        $("#submit").click(function (event) {
+            event.preventDefault();
+            $("#info").hide();
+            var username = $("input#username1").val();
+            var password = $("input#password1").val();
+            validateaccount(username, password);
+        });
+    });
+</script>
+
+<body>
+    <div class="container-md">
+
+        <%- include('partials/navbar') %>
+
+            <div class="row" id="signin">
+                <h2>Sign In</h2>
+                <form action="javascript:void(0);" method="post">
+                    <div class="mb-3 mt-3 w-25">
+                        <label for="username1">Username:</label>
+                        <input type="text" name="username1" class="form-control" placeholder="Enter Username" id="username1" minlength=3 maxlength=20>
+                    </div>
+                    <div class="mb-3 w-25">
+                        <label for="password1">Password:</label>
+                        <input type="password" class="form-control" id="password1" placeholder="Enter password" minlength=5 maxlength=20 name="pswd">
+                    </div>
+                    <button type="submit" id="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+
+            <div id="info"> </div>
+    </div>
+</body>
