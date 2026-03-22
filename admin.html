@@ -31,22 +31,23 @@
 
 <script>
 
- if(getit("signinUser")=="undefined" || getit("signinUser")==""){
-  window.location.href="signin.html";
-}
+  if (getit("signinUser") == "undefined" || getit("signinUser") == "") {
+    window.location.href = "signin.html";
+  }
 
-$(document).ready(function(){
+  $(document).ready(function () {
 
-  $("#signout").click(function(){
+    $("#signout").click(function () {
 
-    setit("signinUser","");
-    window.location.href="signin.html";
+      setit("signinUser", "");
+      window.location.href = "signin.html";
 
-  });
+    });
 
 
-});  // ready
+  });  // ready
 </script>
+
 <body>
   <div class="container">
 
@@ -65,7 +66,7 @@ $(document).ready(function(){
 
 
 
-  </div>  <!-- container -->
+  </div> <!-- container -->
 
 
 

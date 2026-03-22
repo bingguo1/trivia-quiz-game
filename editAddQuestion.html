@@ -51,7 +51,7 @@
 			$.ajax({    //create an ajax request to load_page.php
 				async: true,
 				global: false,
-				data: Object.assign({columnSets: columnSets}, params),
+				data: Object.assign({ columnSets: columnSets }, params),
 				type: "POST",
 				url: "askphp.php",
 				dataType: "json",   //expect html to be returned
@@ -98,7 +98,7 @@
 				$('#detail').css({ height: "180" });
 			if (searchParams.get('mode') == "edit") {
 				//	    var number=getit("number");
-				var str = {mode: 'byNumber', number: number};
+				var str = { mode: 'byNumber', number: number };
 				var stringArr = ["category", "question", "answer", "detail"];
 				var oneset = [];
 				askphp(str, stringArr, function (result) {
