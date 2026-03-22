@@ -3,3 +3,5 @@ test*
 functions/
 node_modules/
 .env
+app.yaml
+db/

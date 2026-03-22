@@ -122,7 +122,7 @@ function getAllSiblingInputs(elem, filter) {
 	      answer.remove();
 	  }else{
 	      answer = document.createElement("div");
-	      answer.innerText=itemList[i].answer;
+	      answer.innerHTML=itemList[i].answer;
 	      answer.setAttribute("class","eachAnswer");
 	      event.target.parentNode.append(answer);
 	      renderMathInElement(answer, katex_opts);
@@ -491,12 +491,11 @@ function getAllSiblingInputs(elem, filter) {
 	      allQuestionShowedBefore=true;
 	      allQuestionContent=[];
 	      itemList=[];
-	      var str;
-	      if(chooseAll) str="SELECT number,question FROM tbquiz ";
-	      else  str = "SELECT number,question,answer FROM tbquiz  WHERE category in ("+selectedCategoryIds.join(',')+")";
+	      var params;
+	      if(chooseAll) params={mode: 'all'};
+	      else params={mode: 'byCategories', categoryIds: selectedCategoryIds};
 	      var stringArr=["number","question","answer"];
-	      //	      console.log("show all sql:"+str);
-	      askphp(str,stringArr,function(result){
+	      askphp(params,stringArr,function(result){
 		  if(result[0]=="succeed"){
 		      result.shift(); // use shift() to remove the first element
 		      var n=result.length/3;
