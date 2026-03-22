@@ -53,7 +53,7 @@
 				global: false,
 				data: Object.assign({ columnSets: columnSets }, params),
 				type: "POST",
-				url: "askphp.php",
+				url: "api/askphp.php",
 				dataType: "json",   //expect html to be returned
 				success: callback
 			});   // ajax
@@ -139,7 +139,7 @@
 					global: false,
 					data: { sqlmode: sqlmode, number: number, category: category, question: question, answer: answer, detail: detail },
 					type: "POST",
-					url: "updateAddQuestion.php",
+					url: "api/updateAddQuestion.php",
 					dataType: "json",   //expect html to be returned
 					success: function (response) {
 						// console.log("response:"+response);

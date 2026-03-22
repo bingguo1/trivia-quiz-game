@@ -4,7 +4,7 @@ function getdata(data){
 
 
 function setit(key,value){
-    $.post("phpsessionwork.php",
+    $.post("api/phpsessionwork.php",
 	   {
 	       task: "set",
 	       key : key,
@@ -21,7 +21,7 @@ function getit(key){
 	global: false,
 	data: {task: "get", key: key},
 	type: "POST",
-	url: "phpsessionwork.php",
+	url: "api/phpsessionwork.php",
 	success: function(response){
 	    //  $("#test").html(response);
 	    result=response;
@@ -32,7 +32,7 @@ function getit(key){
 }
 
 function removeit(key){
-    $.post("phpsessionwork.php",
+    $.post("api/phpsessionwork.php",
 	   {
 	       task: "remove",
 	       key : key,
@@ -43,7 +43,7 @@ function removeit(key){
 }
 
 function clearit(){
-    $.post("phpsessionwork.php",
+    $.post("api/phpsessionwork.php",
 	   {
 	       task: "clear",
 	       key : key,

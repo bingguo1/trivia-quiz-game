@@ -1,7 +1,7 @@
 <?php
 
 // Load .env file for local development (not present on Google App Engine)
-$envFile = __DIR__ . '/.env';
+$envFile = __DIR__ . '/../.env';
 if (file_exists($envFile)) {
     $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {

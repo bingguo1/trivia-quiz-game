@@ -39,7 +39,7 @@
 			global: false,
 			data: { username: username, password: password },
 			type: "POST",
-			url: "validateaccount.php",
+			url: "api/validateaccount.php",
 			dataType: "json",   //expect html to be returned
 			success: function (response) {
 				console.log("response:" + response[0]);
@@ -75,7 +75,7 @@
 			global: false,
 			data: { info: info },
 			type: "POST",
-			url: "adduser.php",
+			url: "api/adduser.php",
 			//  dataType: "json",   //expect html to be returned
 			success: function (response) {
 				console.log("add user succeed: " + response);

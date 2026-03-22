@@ -1,6 +1,6 @@
 <?php
 
-include 'connect.php';
+include __DIR__ . '/connect.php';
 //$conn->set_charset("utf8");
 
 // Check connection

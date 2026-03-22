@@ -1,5 +1,5 @@
 <?php
-include 'connect.php';
+include __DIR__ . '/connect.php';
 
 $sql = 'SELECT name, id AS "Id", topcategory AS "topCategory" FROM categories WHERE subcategory=0';
 $sql2= 'SELECT id AS "Id", topcategory AS "topCategory", subcategory AS "subCategory", name FROM categories WHERE subcategory!=0';

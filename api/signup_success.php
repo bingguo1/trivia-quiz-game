@@ -34,7 +34,7 @@
   </script>
 
   <?php
-  include "connect.php";
+  include __DIR__ . '/connect.php';
 
   // Read raw POST values — escaping is handled by PDO prepared statements
   $realname  = $_POST["realname"]  ?? '';

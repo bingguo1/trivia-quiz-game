@@ -54,7 +54,7 @@
 				global: false,
 				data: { queryString: queryString, columnSets: columnSets },
 				type: "POST",
-				url: "askphp.php",
+				url: "api/askphp.php",
 				dataType: "json",   //expect html to be returned
 				success: callback
 			});   // ajax
@@ -123,7 +123,7 @@
 						global: false,
 						data: { sqlmode: sqlmode, category: selectedCat, question: question, answer: answer },
 						type: "POST",
-						url: "updateAddQuestion.php",
+						url: "api/updateAddQuestion.php",
 						dataType: "json",   //expect html to be returned
 						success: function (response) {
 							//			console.log("response:"+response);

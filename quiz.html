@@ -102,7 +102,7 @@
 				global: false,
 				data: Object.assign({ columnSets: columnSets }, params),
 				type: "POST",
-				url: "askphp.php",
+				url: "api/askphp.php",
 				dataType: "json",   //expect html to be returned
 				success: callback,
 				error: function (xhr, status, error) {
@@ -151,7 +151,7 @@
 				global: false,
 				data: { number: itemList[i].number },
 				type: "POST",
-				url: "getCategory.php",
+				url: "api/getCategory.php",
 				dataType: "json",   //expect html to be returned
 				success: function (response) {
 					isEnglish = parseInt(response[0]) == 900;
@@ -164,7 +164,7 @@
 				}
 			});   // ajax
 			window.open(
-				'editAddQuestion.html?number=' + itemList[i].number + '&mode=edit&isEnglish=' + isEnglish,
+				'editAddQuestion.html?number=' + numberNow + '&mode=edit&isEnglish=' + isEnglish,
 				'_blank' // <- This is what makes it open in a new window.
 			);
 
@@ -230,7 +230,7 @@
 				$.ajax({    //create an ajax request to load_page.php
 					global: false,
 					type: "POST",
-					url: "getAllCategories.php",
+					url: "api/getAllCategories.php",
 					dataType: "json",   //expect html to be returned
 					success: function (response) {
 						// console.log("response:",response);
@@ -537,7 +537,7 @@
 					global: false,
 					data: { number: numberlist[i] },
 					type: "POST",
-					url: "getCategory.php",
+					url: "api/getCategory.php",
 					dataType: "json",   //expect html to be returned
 					success: function (response) {
 						isEnglish = parseInt(response[0]) == 900;

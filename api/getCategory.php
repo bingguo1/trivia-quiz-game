@@ -1,5 +1,5 @@
 <?php
-include 'connect.php';
+include __DIR__ . '/connect.php';
 
 
 $sql="SELECT category FROM tbquiz where number = ?";

@@ -1,6 +1,6 @@
 <?php
 
-include 'connect.php';
+include __DIR__ . '/connect.php';
 
 // Accepted columns and tables (whitelist to prevent injection)
 const ALLOWED_TABLE = 'tbquiz';
