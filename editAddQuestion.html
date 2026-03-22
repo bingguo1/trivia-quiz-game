@@ -47,11 +47,11 @@
 		}
 
 
-		function askphp(queryString, columnSets, callback) {
+		function askphp(params, columnSets, callback) {
 			$.ajax({    //create an ajax request to load_page.php
 				async: true,
 				global: false,
-				data: { queryString: queryString, columnSets: columnSets },
+				data: Object.assign({columnSets: columnSets}, params),
 				type: "POST",
 				url: "askphp.php",
 				dataType: "json",   //expect html to be returned
@@ -98,7 +98,7 @@
 				$('#detail').css({ height: "180" });
 			if (searchParams.get('mode') == "edit") {
 				//	    var number=getit("number");
-				var str = "SELECT category,question,answer,detail FROM tbquiz  WHERE number=" + number;
+				var str = {mode: 'byNumber', number: number};
 				var stringArr = ["category", "question", "answer", "detail"];
 				var oneset = [];
 				askphp(str, stringArr, function (result) {

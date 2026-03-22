@@ -96,10 +96,10 @@ function getAllSiblingInputs(elem, filter) {
 	  return array;
       }
 
-      function askphp(queryString,columnSets,callback){
+      function askphp(params, columnSets, callback){
 	  $.ajax({    //create an ajax request to load_page.php
 	      global: false,
-	      data: {queryString: queryString,columnSets: columnSets},
+	      data: Object.assign({columnSets: columnSets}, params),
 	      type: "POST",
 	      url: "askphp.php",
 	      dataType: "json",   //expect html to be returned
@@ -315,13 +315,11 @@ function getAllSiblingInputs(elem, filter) {
 	      });
 
 	      if(selectedCategoryIds.length<1) return;
-	      let str= "SELECT number FROM tbquiz where category in ("+ selectedCategoryIds.join(',')+")";
-	      // console.log("str--->:",str);
+	      let params = {mode: 'byCategories', categoryIds: selectedCategoryIds};
 	      Cookies.set("selectedCategoryIds",JSON.stringify(selectedCategoryIds));
-	      //str+=categoryCondition;
 	      let stringArr=[];
 	      stringArr.push("number");
-	      askphp(str,stringArr,function(response){
+	      askphp(params,stringArr,function(response){
 		  //		  console.log("length::"+response.length);
 		  if(response[0]=="succeed"){
 		      response.shift(); // use shift() to remove the first element
@@ -345,9 +343,9 @@ function getAllSiblingInputs(elem, filter) {
 
 	  $("#startAll").click(function(){
 	      chooseAll=true;
-	      var str="SELECT number FROM tbquiz";
+	      var params = {mode: 'all'};
 	      var stringArr=["number"];
-	      askphp(str,stringArr,function(response){
+	      askphp(params,stringArr,function(response){
 		  //		  console.log("length::"+response.length);
 		  if(response[0]=="succeed"){
 		      response.shift(); // use shift() to remove the first element
@@ -382,7 +380,7 @@ function getAllSiblingInputs(elem, filter) {
 	      setit("iQuestion",iQuestion);
 	      setit("number",numberlist[iQuestion]);
 	      numberNow=numberlist[iQuestion];
-	      var str = "SELECT question,answer,detail FROM tbquiz  WHERE number="+numberlist[iQuestion];
+	      var str = {mode: 'byNumber', number: numberlist[iQuestion]};
 	      var stringArr=["question","answer","detail"];
 	      askphp(str,stringArr,getQuestionFromAjax);
 	      var j=iQuestion+1;
