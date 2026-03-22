@@ -15,9 +15,10 @@ $password=$info[2];
 $email=$info[3];
 $interests=$info[4];
 
-$sql="SELECT username FROM tbusers where username='$username'";
+$sql="SELECT username FROM tbusers WHERE username=?";
 try{
-    $result=$conn->query($sql);
+    $result=$conn->prepare($sql);
+    $result->execute([$username]);
     $row=$result->fetch();
     if($row) {
 	echo json_encode(array("overlap"));

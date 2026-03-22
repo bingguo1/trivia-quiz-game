@@ -10,10 +10,11 @@ $password=$_POST["password"];
 
 $salt = "hello123dark matter like a unicorn";
 $hash = hash('sha512',$salt.$password);
-$sql = "SELECT password FROM tbusers  WHERE username='$username' ";
+$sql = "SELECT password FROM tbusers WHERE username=?";
 
 try{
-    $result = $conn->query($sql);
+    $result = $conn->prepare($sql);
+    $result->execute([$username]);
     $row=$result->fetch();
      if($row) {
 	 $truepass=$row["password"];

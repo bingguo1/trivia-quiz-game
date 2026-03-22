@@ -1,8 +1,8 @@
 <?php
 include 'connect.php';
 
-$sql = "SELECT name, Id,topCategory  from categories where subCategory=0";
-$sql2= "SELECT * from categories where subCategory!=0";
+$sql = 'SELECT name, id AS "Id", topcategory AS "topCategory" FROM categories WHERE subcategory=0';
+$sql2= 'SELECT id AS "Id", topcategory AS "topCategory", subcategory AS "subCategory", name FROM categories WHERE subcategory!=0';
 try {
     $stmt = $conn->prepare($sql);
     //$stmt->execute([$_POST['number']]);

@@ -35,30 +35,32 @@
 
   <?php
   include "connect.php";
-  $realname=mysqli_real_escape_string($conn,$_POST["realname"]);
-  $username=mysqli_real_escape_string($conn,$_POST["username"]);
-  $password=mysqli_real_escape_string($conn,$_POST["password"]);
-  $email=mysqli_real_escape_string($conn,$_POST["email"]);
-  $interests=mysqli_real_escape_string($conn,$_POST["interests"]);
 
+  // Read raw POST values — escaping is handled by PDO prepared statements
+  $realname  = $_POST["realname"]  ?? '';
+  $username  = $_POST["username"]  ?? '';
+  $password  = $_POST["password"]  ?? '';
+  $email     = $_POST["email"]     ?? '';
+  $interests = $_POST["interests"] ?? '';
 
   $salt = "hello123dark matter like a unicorn";
-  $hash = hash('sha512',$salt.$password);
+  $hash = hash('sha512', $salt . $password);
 
-
-  $sql="INSERT INTO tbusers (registertime,realname,username,password,level,interests)
-  VALUES (NOW(),'$realname','$username','$hash','1','$interests')
-  ";
-  if($conn->query($sql)===TRUE){
+  try {
+    $stmt = $conn->prepare(
+      "INSERT INTO tbusers (registertime, realname, username, password, email, level, interests)
+       VALUES (NOW(), ?, ?, ?, ?, '1', ?)"
+    );
+    $stmt->execute([$realname, $username, $hash, $email, $interests]);
 
     echo "Insert successfully!";
     session_start();
-    $_SESSION["signined"]="yes";
+    $_SESSION["signined"] = "yes";
+  } catch (PDOException $e) {
+    echo "Error inserting: " . $e->getMessage();
   }
-  else {
-    echo "error inserting:".$conn->error;
-  }
-  $conn->close();
+
+  $conn = null;
 
   ?>
 
