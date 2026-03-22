@@ -1,2 +1,5 @@
 *~
 test*
+functions/
+node_modules/
+.env
