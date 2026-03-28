@@ -35,6 +35,9 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
 	<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 
+	<!-- Markdown rendering -->
+	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
 </head>
 
 <body>
@@ -68,6 +71,18 @@
 		function bindPreview(textareaId, previewId) {
 			const ta = document.getElementById(textareaId);
 			ta.addEventListener('input', () => renderPreview(textareaId, previewId));
+		}
+
+		function md2html(str) {
+			if (!str) return '';
+			const stash = [];
+			let s = str
+				.replace(/\$\$[\s\S]+?\$\$/g, m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; })
+				.replace(/\$[^\$\n]+?\$/g,     m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; });
+			s = s.replace(/([^\n])\n([^\n])/g, '$1  \n$2');
+			s = marked.parse(s);
+			s = s.replace(/%%MATH(\d+)%%/g, (_, i) => stash[parseInt(i)]);
+			return s;
 		}
 
 		function askphp(params, columnSets, callback) {
@@ -108,12 +123,22 @@
 				spellChecker: false,
 				status: false,
 				toolbar: ['bold','italic','strikethrough','|','unordered-list','ordered-list','|','code','|','preview'],
+				previewRender: function(text, previewEl) {
+					previewEl.innerHTML = md2html(text);
+					setTimeout(() => renderMathInElement(previewEl, katex_opts), 0);
+					return previewEl.innerHTML;
+				},
 			});
 			var mdeDetail = new EasyMDE({
 				element: document.getElementById('detail'),
 				spellChecker: false,
 				status: false,
 				toolbar: ['bold','italic','strikethrough','|','unordered-list','ordered-list','|','code','|','preview'],
+				previewRender: function(text, previewEl) {
+					previewEl.innerHTML = md2html(text);
+					setTimeout(() => renderMathInElement(previewEl, katex_opts), 0);
+					return previewEl.innerHTML;
+				},
 			});
 			let searchParams = new URLSearchParams(window.location.search);
 			var englishMode = false;

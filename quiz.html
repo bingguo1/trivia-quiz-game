@@ -125,6 +125,9 @@
 			let s = str
 				.replace(/\$\$[\s\S]+?\$\$/g, m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; })
 				.replace(/\$[^\$\n]+?\$/g,     m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; });
+			// Convert single newlines to hard line breaks (two trailing spaces + newline)
+			// but leave blank lines (double newlines) alone so paragraphs still work
+			s = s.replace(/([^\n])\n([^\n])/g, '$1  \n$2');
 			s = marked.parse(s);
 			// Restore math tokens
 			s = s.replace(/%%MATH(\d+)%%/g, (_, i) => stash[parseInt(i)]);
@@ -639,7 +642,7 @@
 
 		<div id="showlater">
 			<div class="text-center alert alert-info" id="question"></div>
-			<div class="row" id="buttons">
+			<div class="row mx-0" id="buttons">
 				<button class="btn btn-success col-sm-4" type="button" id="preQuestion"> <i class="fa-solid fa-angles-left"></i> (Prev) </button>
 				<button class="btn btn-warning col-sm-4" type="button" id="showAnswer"> Show Answer </button>
 				<button class="btn btn-success col-sm-4" type="button" id="nextQuestion"> <i class="fa-solid fa-angles-right"></i> (Next) </button>
