@@ -201,6 +201,7 @@
 			var i = -1;
 			var currentSet;
 			var numberlist;
+			var questionCache = {}; // keyed by question number
 			//	  var categoryCondition=" ";
 			var chooseAll = false;
 			var listshowing = false;
@@ -225,6 +226,7 @@
 				//	      $("#categoriesPics").hide();
 				if (Cookies.get("numberlist")) numberlist = JSON.parse(Cookies.get("numberlist"));
 				if (Cookies.get("selectedCategoryIds")) selectedCategoryIds = JSON.parse(Cookies.get("selectedCategoryIds"));
+				try { questionCache = JSON.parse(localStorage.getItem('questionCache') || '{}'); } catch(e) { questionCache = {}; }
 
 				i = parseInt(getit("iQuestion")); ///convert string to int 
 				total = getit("total");
@@ -339,56 +341,61 @@
 				if (selectedCategoryIds.length < 1) return;
 				let params = { mode: 'byCategories', categoryIds: selectedCategoryIds };
 				Cookies.set("selectedCategoryIds", JSON.stringify(selectedCategoryIds));
-				let stringArr = [];
-				stringArr.push("number");
+				let stringArr = ["number", "question", "answer", "detail"];
 				askphp(params, stringArr, function (response) {
-					//		  console.log("length::"+response.length);
 					if (response[0] == "succeed") {
-						response.shift(); // use shift() to remove the first element
-						//		      console.log("length now:"+response.length);		      
-						numberlist = response;
+						response.shift();
+						questionCache = {};
+						numberlist = [];
+						var n = response.length / 4;
+						for (var k = 0; k < n; k++) {
+							var num = response[4*k];
+							numberlist.push(num);
+							questionCache[num] = [response[4*k+1], response[4*k+2], response[4*k+3]];
+						}
+						localStorage.setItem('questionCache', JSON.stringify(questionCache));
 						total = numberlist.length;
-						// console.log("numberlist:",numberlist);
 						$("#stats").html("Total:" + total);
 						shuffleAndStart();
 					} else {
 						alert(response);
 					}
 				});
-				//console.log("numberlist:"+numberlist);
-				//total=numberlist.length;
-				//	      $("#categoriesPics").hide();
-				// $("#shuffleAndGo").show();
-				//	      setit("categoryCondition",categoryCondition);
 				setit("chooseAll", false);
 			}); // startThem click
 
 			$("#startAll").click(function () {
 				chooseAll = true;
 				var params = { mode: 'all' };
-				var stringArr = ["number"];
+				var stringArr = ["number", "question", "answer", "detail"];
 				askphp(params, stringArr, function (response) {
-					//		  console.log("length::"+response.length);
 					if (response[0] == "succeed") {
-						response.shift(); // use shift() to remove the first element
-						//		      console.log("length now:"+response.length);		      
-						numberlist = response;
+						response.shift();
+						questionCache = {};
+						numberlist = [];
+						var n = response.length / 4;
+						for (var k = 0; k < n; k++) {
+							var num = response[4*k];
+							numberlist.push(num);
+							questionCache[num] = [response[4*k+1], response[4*k+2], response[4*k+3]];
+						}
+						localStorage.setItem('questionCache', JSON.stringify(questionCache));
 						total = numberlist.length;
-						//		      console.log("total:"+total);
 						$("#stats").html("Total:" + total);
 						shuffleAndStart();
 					} else {
 						alert(response);
 					}
 				});
-				//	      $("#categoriesPics").hide();
-				// $("#shuffleAndGo").show();
 				setit("chooseAll", true);
 			}); // startAll click
 
 			function getQuestionFromAjax(response) {
 				if (response[0] == "succeed") {
 					response.shift(); // use shift() to remove the first element
+					// Store raw values in cache so next visit skips AJAX
+					questionCache[numberNow] = [response[0], response[1], response[2]];
+					try { localStorage.setItem('questionCache', JSON.stringify(questionCache)); } catch(e) {}
 					currentSet = [
 						nl2br(response[0]),   // question: plain text
 						md2html(response[1]), // answer: markdown
@@ -400,18 +407,29 @@
 				}
 			}
 			function showQuestion(iQuestion) {
-				//	      console.log("iQuestion:"+iQuestion);
 				$("#answer").html("");
 				$("#detail").html("");
 				setit("iQuestion", iQuestion);
-				setit("number", numberlist[iQuestion]);
-				numberNow = numberlist[iQuestion];
-				var str = { mode: 'byNumber', number: numberlist[iQuestion] };
-				var stringArr = ["question", "answer", "detail"];
-				askphp(str, stringArr, getQuestionFromAjax);
+				var num = numberlist[iQuestion];
+				setit("number", num);
+				numberNow = num;
 				var j = iQuestion + 1;
 				$("#stats").html(j + '/' + total);
-
+				if (questionCache[num]) {
+					// Serve from cache — no AJAX needed
+					var cached = questionCache[num];
+					currentSet = [
+						nl2br(cached[0]),
+						md2html(cached[1]),
+						md2html(cached[2])
+					];
+					$("#question").html(currentSet[0]);
+				} else {
+					// Fallback: fetch individually if not in cache
+					var str = { mode: 'byNumber', number: num };
+					var stringArr = ["question", "answer", "detail"];
+					askphp(str, stringArr, getQuestionFromAjax);
+				}
 			}
 
 			function shuffleAndStart() {
