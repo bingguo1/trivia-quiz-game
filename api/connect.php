@@ -9,7 +9,9 @@ if (file_exists($envFile)) {
         [$key, $value] = explode('=', $line, 2);
         // Only set if not already in the environment (GAE sets them natively)
         if (!isset($_ENV[trim($key)])) {
-            $_ENV[trim($key)] = trim($value);
+            // Strip inline comments (e.g. value ##comment)
+            $val = trim(preg_replace('/\s+##.*$/', '', $value));
+            $_ENV[trim($key)] = $val;
         }
     }
 }
