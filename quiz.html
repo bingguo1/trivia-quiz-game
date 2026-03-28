@@ -113,6 +113,8 @@
 			});   // ajax
 		}
 
+		function nl2br(str) { return (str || '').replace(/\n/g, '<br>'); }
+
 		function clickitem(i, event) {
 			//var questionHTML="<button class='eachQuestion' type='button' onclick='clickitem( " +i+")'>" + itemList[i].question +"</button>";
 			//var answerHTML="<div class='eachAnswer'>" + itemList[i].answer +"</div>";
@@ -123,7 +125,7 @@
 				answer.remove();
 			} else {
 				answer = document.createElement("div");
-				answer.innerHTML = itemList[i].answer;
+					answer.innerHTML = nl2br(itemList[i].answer);
 				answer.setAttribute("class", "eachAnswer");
 				event.target.parentNode.append(answer);
 				renderMathInElement(answer, katex_opts);
@@ -368,7 +370,7 @@
 			function getQuestionFromAjax(response) {
 				if (response[0] == "succeed") {
 					response.shift(); // use shift() to remove the first element
-					currentSet = response;
+					currentSet = response.map(nl2br);
 					$("#question").html(currentSet[0]);
 				} else {
 					alert(response);

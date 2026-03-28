@@ -49,7 +49,7 @@ try {
     $a = ["succeed"];
     while ($row = $stmt->fetch()) {
         foreach ($columnSets as $column) {
-            array_push($a, nl2br($row[$column]));
+            array_push($a, $row[$column]);
         }
     }
     echo json_encode($a);

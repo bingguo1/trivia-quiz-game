@@ -23,13 +23,12 @@
 	<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/additional-methods.min.js"></script>
 
 	<script src="js/myfunctions.js"> </script>
-	<script src="//cdn.ckeditor.com/4.5.11/full/ckeditor.js"></script>
-	<!-- <script src="https://cdn.ckeditor.com/4.17.1/standard/ckeditor.js"></script> -->
 
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-	<!-- <link rel="stylesheet" href="RichText/src/richtext.min.css"> -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
-	<!-- <script src="RichText/src/jquery.richtext.min.js"></script> -->
+	<!-- KaTeX for math rendering -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css" integrity="sha384-KiWOvVjnN8qwAZbuQyWDIbfCLFhLXNETzBQjA/92pIowpC0d2O3nppDGQVgwd2nB" crossorigin="anonymous">
+	<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js" integrity="sha384-0fdwu/T/EQMsQlrHCCHoH10pkPLlKA1jL5dFyUOvB3lfeT2540/2g6YgSi2BL14p" crossorigin="anonymous"></script>
+	<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/contrib/auto-render.min.js" integrity="sha384-+XBljXPPiv+OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR" crossorigin="anonymous"></script>
+
 	<script src="https://cdn.jsdelivr.net/npm/js-cookie@3/dist/js.cookie.min.js"></script>
 
 
@@ -46,6 +45,27 @@
 			window.location.href = "quiz.html";  /////跳转到另一页面
 		}
 
+
+		const katex_opts = {
+			delimiters: [
+				{ left: '$$', right: '$$', display: true },
+				{ left: '$', right: '$', display: false },
+			],
+			throwOnError: false
+		};
+
+		function renderPreview(textareaId, previewId) {
+			const raw = document.getElementById(textareaId).value;
+			const preview = document.getElementById(previewId);
+			// Replace newlines with <br> then render math
+			preview.innerHTML = raw.replace(/\n/g, '<br>');
+			renderMathInElement(preview, katex_opts);
+		}
+
+		function bindPreview(textareaId, previewId) {
+			const ta = document.getElementById(textareaId);
+			ta.addEventListener('input', () => renderPreview(textareaId, previewId));
+		}
 
 		function askphp(params, columnSets, callback) {
 			$.ajax({    //create an ajax request to load_page.php
@@ -77,6 +97,9 @@
 			// https://stackoverflow.com/questions/19491336/how-to-get-url-parameter-using-jquery-or-plain-javascript
 			$("#greet").append(getit("signinUser"));
 			fillCategories();
+			bindPreview('question', 'question-preview');
+			bindPreview('answer',   'answer-preview');
+			bindPreview('detail',   'detail-preview');
 			let searchParams = new URLSearchParams(window.location.search);
 			var englishMode = false;
 			var number;
@@ -105,13 +128,12 @@
 					//console.log(result);
 					$("#category").val(result[1]);
 					$("#question").val(result[2]).trigger("change");
-					//		$("#answer").val(result[3].replace(/(<br ?\/?>)*/g,""));
 					$("#answer").val(result[3]);
-					//		console.log("original answer:",result[3]);
-					//		console.log("answer:",result[3]);
-					//		console.log("detail:",result[4]);
-					$("#detail").val(result[4]).trigger("change");  /// you need this to trigger the show (RichText from github)
-					//		$("#detail").val(result[4]);
+					$("#detail").val(result[4]).trigger("change");
+					// Render previews after data is loaded
+					renderPreview('question', 'question-preview');
+					renderPreview('answer',   'answer-preview');
+					renderPreview('detail',   'detail-preview');
 				});
 			} else {
 				if (Cookies.get("previousCategory")) {
@@ -180,12 +202,15 @@
 				</select>
 				<br>
 				Question: <br>
-				<textarea name="question" id="question" rows="2"></textarea> <br>
+				<textarea name="question" id="question" rows="2"></textarea>
+				<div class="field-preview" id="question-preview"></div><br>
 				Answer: <br>
 				<!--- no space between textarea, or when you edit, you wont start from the beginning  --->
-				<textarea name="answer" id="answer"></textarea> <br>
+				<textarea name="answer" id="answer"></textarea>
+				<div class="field-preview" id="answer-preview"></div><br>
 				Detail: <br>
-				<textarea name="detail" id="detail"></textarea> <br>
+				<textarea name="detail" id="detail"></textarea>
+				<div class="field-preview" id="detail-preview"></div><br>
 				<input type="submit" value="Add It!" id="submit-button">
 				<span id="succeed"> succeeded </span>
 				<span id="fail"> failed </span>

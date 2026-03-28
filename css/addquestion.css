@@ -1,23 +1,35 @@
-#question{
-
-  width:100%;
+#question {
+  width: 100%;
 }
-#answer{
-
-width: 100%;
-height: 180px;
-
+#answer {
+  width: 100%;
+  height: 180px;
 }
-
-.richText .richText-editor{
-    height: 100px;
-}
-#detail{
-
-width: 100%;
-height: 100px;
+#detail {
+  width: 100%;
+  height: 100px;
 }
 
-#succeed, #fail{
+.field-preview {
+  width: 100%;
+  min-height: 1.4em;
+  padding: 6px 10px;
+  margin-top: 4px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 0.97em;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #212529;
+}
+.field-preview:empty::before {
+  content: "preview";
+  color: #adb5bd;
+  font-style: italic;
+}
+
+#succeed, #fail {
     display: none;
 }
