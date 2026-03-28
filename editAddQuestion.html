@@ -31,6 +31,9 @@
 
 	<script src="https://cdn.jsdelivr.net/npm/js-cookie@3/dist/js.cookie.min.js"></script>
 
+	<!-- EasyMDE for answer/detail editing -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 
 </head>
 
@@ -98,8 +101,20 @@
 			$("#greet").append(getit("signinUser"));
 			fillCategories();
 			bindPreview('question', 'question-preview');
-			bindPreview('answer',   'answer-preview');
-			bindPreview('detail',   'detail-preview');
+
+			// EasyMDE for answer and detail
+			var mdeAnswer = new EasyMDE({
+				element: document.getElementById('answer'),
+				spellChecker: false,
+				status: false,
+				toolbar: ['bold','italic','strikethrough','|','unordered-list','ordered-list','|','code','|','preview'],
+			});
+			var mdeDetail = new EasyMDE({
+				element: document.getElementById('detail'),
+				spellChecker: false,
+				status: false,
+				toolbar: ['bold','italic','strikethrough','|','unordered-list','ordered-list','|','code','|','preview'],
+			});
 			let searchParams = new URLSearchParams(window.location.search);
 			var englishMode = false;
 			var number;
@@ -128,12 +143,10 @@
 					//console.log(result);
 					$("#category").val(result[1]);
 					$("#question").val(result[2]).trigger("change");
-					$("#answer").val(result[3]);
-					$("#detail").val(result[4]).trigger("change");
-					// Render previews after data is loaded
+					mdeAnswer.value(result[3]);
+					mdeDetail.value(result[4]);
+					// Render question preview after data is loaded
 					renderPreview('question', 'question-preview');
-					renderPreview('answer',   'answer-preview');
-					renderPreview('detail',   'detail-preview');
 				});
 			} else {
 				if (Cookies.get("previousCategory")) {
@@ -148,8 +161,8 @@
 				$("#detail").trigger("change");
 				var category = $("#category").val();
 				var question = $("#question").val().trim();
-				var answer = $("#answer").val();
-				var detail = $("#detail").val();
+				var answer = mdeAnswer.value();
+				var detail = mdeDetail.value();
 				//console.log("new detail:"+detail);
 				if (category == "" || question.trim() == "" || answer.trim() == "") {
 					console.log("Validation failed: missing required fields");
@@ -169,10 +182,10 @@
 						if (searchParams.get('mode') == "edit") {
 							window.location.href = "quiz.html";
 						} else {
-							$("#question").val("");
-							$("#answer").val("");
-							$("#detail").val("");
-							$("#succeed").fadeOut();
+								$("#question").val("");
+								mdeAnswer.value("");
+								mdeDetail.value("");
+								$("#succeed").fadeOut();
 						}
 
 					}
@@ -207,10 +220,8 @@
 				Answer: <br>
 				<!--- no space between textarea, or when you edit, you wont start from the beginning  --->
 				<textarea name="answer" id="answer"></textarea>
-				<div class="field-preview" id="answer-preview"></div><br>
 				Detail: <br>
-				<textarea name="detail" id="detail"></textarea>
-				<div class="field-preview" id="detail-preview"></div><br>
+				<textarea name="detail" id="detail"></textarea><br>
 				<input type="submit" value="Add It!" id="submit-button">
 				<span id="succeed"> succeeded </span>
 				<span id="fail"> failed </span>

@@ -41,6 +41,9 @@
 	<!-- To automatically render math in text elements, include the auto-render extension: -->
 	<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/contrib/auto-render.min.js" integrity="sha384-+XBljXPPiv+OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR" crossorigin="anonymous"></script>
 
+	<!-- Markdown rendering -->
+	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
 </head>
 
 <body>
@@ -114,6 +117,19 @@
 		}
 
 		function nl2br(str) { return (str || '').replace(/\n/g, '<br>'); }
+		function md2html(str) {
+			if (!str) return '';
+			// Protect math blocks from marked: stash them, parse markdown, restore
+			const stash = [];
+			// Replace $$...$$ (display) first, then $...$ (inline)
+			let s = str
+				.replace(/\$\$[\s\S]+?\$\$/g, m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; })
+				.replace(/\$[^\$\n]+?\$/g,     m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; });
+			s = marked.parse(s);
+			// Restore math tokens
+			s = s.replace(/%%MATH(\d+)%%/g, (_, i) => stash[parseInt(i)]);
+			return s;
+		}
 
 		function clickitem(i, event) {
 			//var questionHTML="<button class='eachQuestion' type='button' onclick='clickitem( " +i+")'>" + itemList[i].question +"</button>";
@@ -125,7 +141,7 @@
 				answer.remove();
 			} else {
 				answer = document.createElement("div");
-					answer.innerHTML = nl2br(itemList[i].answer);
+					answer.innerHTML = md2html(itemList[i].answer);
 				answer.setAttribute("class", "eachAnswer");
 				event.target.parentNode.append(answer);
 				renderMathInElement(answer, katex_opts);
@@ -370,7 +386,11 @@
 			function getQuestionFromAjax(response) {
 				if (response[0] == "succeed") {
 					response.shift(); // use shift() to remove the first element
-					currentSet = response.map(nl2br);
+					currentSet = [
+						nl2br(response[0]),   // question: plain text
+						md2html(response[1]), // answer: markdown
+						md2html(response[2])  // detail: markdown
+					];
 					$("#question").html(currentSet[0]);
 				} else {
 					alert(response);
@@ -416,16 +436,9 @@
 
 			$("#showAnswer").click(function () {
 				$("#answer").html(currentSet[1]);
-				//let x = document.getElementById("answer");
-				//console.log(currentSet[1]);
-				//x.innerHTML = currentSet[1]; //"$$ p(X)=\\frac{e^{\\beta_{0} +\\beta_{1}X}}{1 + e^{\\beta_{0}+\\beta_{1}X}} $$";
 				$("#detail").html("<hr>" + currentSet[2]);
-
 				renderMathInElement(document.getElementById("answer"), katex_opts);
-				//var y = document.getElementById("equation");
-				//y.innerHTML = " \\( p(X)=\frac{e^{\beta_{0} +\beta_{1}X}}{1 + e^{\beta_{0}+\beta_{1}X}} \\)";
-				//y.innerHTML = "  $  \\beta_{0}   $";
-				//renderMathInElement(y, opts);
+				renderMathInElement(document.getElementById("detail"), katex_opts);
 			});
 
 
@@ -625,10 +638,10 @@
 				<button class="btn btn-success col-sm-4" type="button" id="nextQuestion"> <i class="fa-solid fa-angles-right"></i> (Next) </button>
 			</div>
 			<div class="row well" id="bganswer">
-				<p id="answer"> </p>
+				<div id="answer"> </div>
 			</div>
 			<div class="row" id="bgdetail">
-				<p id="detail"> </p>
+				<div id="detail"> </div>
 			</div>
 		</div>
 
