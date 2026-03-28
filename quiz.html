@@ -444,6 +444,30 @@
 				}
 			});
 
+			// Swipe on #question area to navigate
+			(function () {
+				var touchStartX, touchStartY;
+				var el = document.getElementById('question');
+				el.addEventListener('touchstart', function (e) {
+					touchStartX = e.changedTouches[0].clientX;
+					touchStartY = e.changedTouches[0].clientY;
+				}, { passive: true });
+				el.addEventListener('touchend', function (e) {
+					var dx = e.changedTouches[0].clientX - touchStartX;
+					var dy = e.changedTouches[0].clientY - touchStartY;
+					// Only treat as horizontal swipe if horizontal movement dominates
+					if (Math.abs(dx) > 100 && Math.abs(dx) > Math.abs(dy)) {
+						var slideOut = dx < 0 ? '-60px' : '60px';
+						var slideIn  = dx < 0 ?  '60px' : '-60px';
+						$(el).animate({ opacity: 0, left: slideOut }, 180, function () {
+							if (dx < 0) $("#nextQuestion").trigger('click');
+							else        $("#preQuestion").trigger('click');
+							$(el).css({ left: slideIn }).animate({ opacity: 1, left: '0px' }, 180);
+						});
+					}
+				}, { passive: true });
+			})();
+
 			$("#showAnswer").click(function () {
 				$("#answer").html(currentSet[1]);
 				$("#detail").html("<hr>" + currentSet[2]);
