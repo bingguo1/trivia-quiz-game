@@ -203,6 +203,16 @@
 					dataType: "json",   //expect html to be returned
 					success: function (response) {
 						// console.log("response:"+response);
+						// Update localStorage cache so quiz.html reflects the edit immediately
+						if (searchParams.get('mode') == "edit") {
+							try {
+								var cache = JSON.parse(localStorage.getItem('questionCache') || '{}');
+								if (cache[number]) {
+									cache[number] = [question, answer, detail];
+									localStorage.setItem('questionCache', JSON.stringify(cache));
+								}
+							} catch(e) {}
+						}
 						$("#succeed").fadeIn();
 						if (searchParams.get('mode') == "edit") {
 							window.location.href = "quiz.html";

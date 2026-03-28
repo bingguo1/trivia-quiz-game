@@ -459,6 +459,7 @@
 				if ($("#showlater").is(":visible")) {
 					if (e.key === 'ArrowRight') $("#nextQuestion").trigger('click');
 					else if (e.key === 'ArrowLeft')  $("#preQuestion").trigger('click');
+					else if (e.key === 'ArrowDown') { e.preventDefault(); $("#showAnswer").trigger('click'); }
 				}
 			});
 
