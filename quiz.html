@@ -434,6 +434,13 @@
 				showQuestion(i);
 			});  // click
 
+			$(document).on('keydown', function (e) {
+				if ($("#showlater").is(":visible")) {
+					if (e.key === 'ArrowRight') $("#nextQuestion").trigger('click');
+					else if (e.key === 'ArrowLeft')  $("#preQuestion").trigger('click');
+				}
+			});
+
 			$("#showAnswer").click(function () {
 				$("#answer").html(currentSet[1]);
 				$("#detail").html("<hr>" + currentSet[2]);

@@ -79,7 +79,10 @@ img{
 
 #question{
   border:1px solid green;
-
+  min-height: 3cm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .row{
