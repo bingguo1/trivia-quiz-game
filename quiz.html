@@ -215,25 +215,51 @@
 				$("#username").html(getit("signinUser"));
 			}
 
+			// Signin/Signout button
+			function updateSigninoutButton() {
+				if (getit("signinUser") != "") {
+					$("#signinout").text("Sign Out").removeClass("btn-outline-secondary").addClass("btn-outline-warning");
+				} else {
+					$("#signinout").text("Sign In").removeClass("btn-outline-warning").addClass("btn-outline-secondary");
+				}
+			}
+			updateSigninoutButton();
+			$("#signinout").click(function () {
+				if (getit("signinUser") != "") {
+					// Sign out
+					removeit("signinUser");
+					$("#username").html("");
+					updateSigninoutButton();
+				} else {
+					// Sign in — open signadmin page in new tab
+					window.open("signadmin.html", "_blank");
+				}
+			});
+
 			$("#expand-collapse").hide();
 			var allCollapsed = true;
 
 			if (Cookies.get("categorylist")) categorylist = JSON.parse(Cookies.get("categorylist"));
 			//console.log("categorylist:",categorylist);
 			//////// currently only numberlist is stored via cookie, all the others are session variables
-			if (getit("state") == "running") {
-				//	      $("#start1").hide();
-				//	      $("#categoriesPics").hide();
-				if (Cookies.get("numberlist")) numberlist = JSON.parse(Cookies.get("numberlist"));
-				if (Cookies.get("selectedCategoryIds")) selectedCategoryIds = JSON.parse(Cookies.get("selectedCategoryIds"));
+			if (localStorage.getItem("state") == "running") {
+				var nl = localStorage.getItem("numberlist");
+				if (nl) numberlist = JSON.parse(nl);
+				var sc = localStorage.getItem("selectedCategoryIds");
+				if (sc) selectedCategoryIds = JSON.parse(sc);
 				try { questionCache = JSON.parse(localStorage.getItem('questionCache') || '{}'); } catch(e) { questionCache = {}; }
 
-				i = parseInt(getit("iQuestion")); ///convert string to int 
-				total = getit("total");
-				showQuestion(i);
-				$("#showlater").show();
-				// categoryCondition=getit("categoryCondition");
-				if (getit("chooseAll") == "true")
+				i = parseInt(localStorage.getItem("iQuestion")); ///convert string to int
+				total = localStorage.getItem("total");
+				if (numberlist && numberlist.length > 0 && i >= 0 && i < numberlist.length) {
+					showQuestion(i);
+					$("#showlater").show();
+				} else {
+					// Corrupt state — reset
+					localStorage.removeItem("state");
+					$("#start1").show();
+				}
+				if (localStorage.getItem("chooseAll") == "true")
 					chooseAll = true;
 
 
@@ -341,6 +367,7 @@
 				if (selectedCategoryIds.length < 1) return;
 				let params = { mode: 'byCategories', categoryIds: selectedCategoryIds };
 				Cookies.set("selectedCategoryIds", JSON.stringify(selectedCategoryIds));
+				localStorage.setItem("selectedCategoryIds", JSON.stringify(selectedCategoryIds));
 				let stringArr = ["number", "question", "answer", "detail"];
 				askphp(params, stringArr, function (response) {
 					if (response[0] == "succeed") {
@@ -361,7 +388,8 @@
 						alert(response);
 					}
 				});
-				setit("chooseAll", false);
+				sessionStorage.setItem("chooseAll", "false"); // keep for compat
+				localStorage.setItem("chooseAll", "false");
 			}); // startThem click
 
 			$("#startAll").click(function () {
@@ -387,7 +415,8 @@
 						alert(response);
 					}
 				});
-				setit("chooseAll", true);
+				sessionStorage.setItem("chooseAll", "true"); // keep for compat
+				localStorage.setItem("chooseAll", "true");
 			}); // startAll click
 
 			function getQuestionFromAjax(response) {
@@ -409,9 +438,9 @@
 			function showQuestion(iQuestion) {
 				$("#answer").html("");
 				$("#detail").html("");
-				setit("iQuestion", iQuestion);
+				localStorage.setItem("iQuestion", iQuestion);
 				var num = numberlist[iQuestion];
-				setit("number", num);
+				localStorage.setItem("number", num);
 				numberNow = num;
 				var j = iQuestion + 1;
 				$("#stats").html(j + '/' + total);
@@ -438,9 +467,9 @@
 				i = 0;
 				$("#showlater").show();
 				showQuestion(i);
-				setit("total", total);
-				setit("state", "running");
-				Cookies.set("numberlist", JSON.stringify(numberlist));
+				localStorage.setItem("total", total);
+				localStorage.setItem("state", "running");
+				localStorage.setItem("numberlist", JSON.stringify(numberlist));
 			}
 
 			$("#nextQuestion").click(function () {
@@ -496,7 +525,8 @@
 
 
 			$("#giveup").click(function () {
-				setit("state", "");
+				sessionStorage.removeItem("state");
+				localStorage.removeItem("state");
 				$("#showlater").hide();
 				if ($('#select-categories').html() == '') getCategoriesFromDB_andShow();
 				else $("#select-and-click").show();
@@ -623,6 +653,24 @@
 				);
 			});
 
+			function openAddPageWithCategory(url) {
+				if (!numberNow) { window.open(url, '_blank'); return; }
+				$.ajax({
+					async: false,
+					global: false,
+					data: { number: numberNow },
+					type: "POST",
+					url: "api/getCategory.php",
+					dataType: "json",
+					success: function (response) {
+						Cookies.set("previousCategory", response[0]);
+					}
+				});
+				window.open(url, '_blank');
+			}
+			$("#add1btn").click(function () { openAddPageWithCategory('editAddQuestion.html?mode=add'); });
+			$("#add2btn").click(function () { openAddPageWithCategory('addTwoMoreQuestion.html'); });
+
 			$("#expand-collapse-button").click(function () {
 				if (allCollapsed) {
 					allCollapsed = false;
@@ -653,17 +701,13 @@
 		<div id="topBar">
 			<button type="button" id="showAll" class="btn btn-outline-primary">showAll</button>
 			<button type="button" class="btn btn-outline-primary" id="editit">Edit</button>
-			<a href="editAddQuestion.html?mode=add" target="_blank">
-				<button type="button" class="btn btn-outline-primary">Add1</button>
-			</a>
-			<a href="addTwoMoreQuestion.html" target="_blank">
-				<button type="button" class="btn btn-outline-primary">Add2+</button>
-
-			</a>
+			<button type="button" class="btn btn-outline-primary" id="add1btn">Add1</button>
+			<button type="button" class="btn btn-outline-primary" id="add2btn">Add2+</button>
 
 			<a href="signadmin.html" target="_blank">
 				<button type="button" class="btn btn-outline-primary">Admin</button>
 			</a>
+			<button type="button" class="btn btn-outline-secondary" id="signinout">Sign In</button>
 			<button type="button" class="btn btn-danger" id="giveup">QUIT</button>
 		</div>
 		<p style="text-align:left;">

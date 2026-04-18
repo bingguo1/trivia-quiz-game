@@ -54,6 +54,9 @@
     $stmt->execute([$realname, $username, $hash, $email, $interests]);
 
     echo "Insert successfully!";
+    $lifetime = 72 * 60 * 60; // 72 hours
+    ini_set('session.gc_maxlifetime', $lifetime);
+    session_set_cookie_params($lifetime);
     session_start();
     $_SESSION["signined"] = "yes";
   } catch (PDOException $e) {

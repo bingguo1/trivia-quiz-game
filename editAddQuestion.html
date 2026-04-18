@@ -46,10 +46,6 @@
 		if (getit("signinUser") == "undefined" || getit("signinUser") == "") {
 			window.location.href = "signadmin.html";  /////跳转到另一页面
 		}
-		else if (getit("number") == "undefined") {
-
-			window.location.href = "quiz.html";  /////跳转到另一页面
-		}
 
 
 		const katex_opts = {
@@ -97,24 +93,45 @@
 			});   // ajax
 		}
 
-		function fillCategories() {
+		function fillCategories(callback) {
 			if (Cookies.get("categorylist")) {
 				let node = "";
 				let categorylist = JSON.parse(Cookies.get("categorylist"));
 				for (let [key, value] of Object.entries(categorylist)) {
-					//		console.log(`${key}: ${value}`);
 					node += `<option value='${key}'>${value}</option>`;
 				}
 				$("#category").append(node);
+				if (callback) callback();
+			} else {
+				// Cookie missing — fetch from DB directly
+				$.ajax({
+					global: false,
+					type: "POST",
+					url: "api/getAllCategories.php",
+					dataType: "json",
+					success: function (response) {
+						let node = "";
+						let categorylist = {};
+						for (const key in response) {
+							categorylist[response[key].Id] = response[key].name;
+							node += `<option value='${response[key].Id}'>${response[key].name}</option>`;
+							for (let i = 0; i < response[key].subcats.length; i++) {
+								categorylist[response[key].subids[i]] = "\u00a0\u00a0\u00a0\u00a0\u00a0" + response[key].subnames[i];
+								node += `<option value='${response[key].subids[i]}'>\u00a0\u00a0\u00a0\u00a0\u00a0${response[key].subnames[i]}</option>`;
+							}
+						}
+						$("#category").append(node);
+						Cookies.set("categorylist", JSON.stringify(categorylist));
+						if (callback) callback();
+					}
+				});
 			}
-
 		}
 
 		$(function () {
 			// https://github.com/webfashionist/RichText
 			// https://stackoverflow.com/questions/19491336/how-to-get-url-parameter-using-jquery-or-plain-javascript
 			$("#greet").append(getit("signinUser"));
-			fillCategories();
 			bindPreview('question', 'question-preview');
 
 			// EasyMDE for answer and detail
@@ -159,25 +176,24 @@
 			}
 			else
 				$('#detail').css({ height: "180" });
-			if (searchParams.get('mode') == "edit") {
-				//	    var number=getit("number");
-				var str = { mode: 'byNumber', number: number };
-				var stringArr = ["category", "question", "answer", "detail"];
-				var oneset = [];
-				askphp(str, stringArr, function (result) {
-					//console.log(result);
-					$("#category").val(result[1]);
-					$("#question").val(result[2]).trigger("change");
-					mdeAnswer.value(result[3]);
-					mdeDetail.value(result[4]);
-					// Render question preview after data is loaded
-					renderPreview('question', 'question-preview');
-				});
-			} else {
-				if (Cookies.get("previousCategory")) {
-					$("#category").val(Cookies.get("previousCategory"));
+
+			fillCategories(function() {
+				if (searchParams.get('mode') == "edit") {
+					var str = { mode: 'byNumber', number: number };
+					var stringArr = ["category", "question", "answer", "detail"];
+					askphp(str, stringArr, function (result) {
+						$("#category").val(result[1]);
+						$("#question").val(result[2]).trigger("change");
+						mdeAnswer.value(result[3]);
+						mdeDetail.value(result[4]);
+						renderPreview('question', 'question-preview');
+					});
+				} else {
+					if (Cookies.get("previousCategory")) {
+						$("#category").val(Cookies.get("previousCategory"));
+					}
 				}
-			}
+			});
 
 
 			$("#form1").submit(function (e) {

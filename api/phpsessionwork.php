@@ -1,5 +1,8 @@
 <?php
 
+$lifetime = 72 * 60 * 60; // 72 hours
+ini_set('session.gc_maxlifetime', $lifetime);
+session_set_cookie_params($lifetime);
 session_start();
 $task=$_POST["task"];
 $key=$_POST["key"];
