@@ -121,10 +121,12 @@
 			if (!str) return '';
 			// Protect math blocks from marked: stash them, parse markdown, restore
 			const stash = [];
-			// Replace $$...$$ (display) first, then $...$ (inline)
+			// Replace math delimiters (display first, then inline) to protect from marked
 			let s = str
-				.replace(/\$\$[\s\S]+?\$\$/g, m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; })
-				.replace(/\$[^\$\n]+?\$/g,     m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; });
+				.replace(/\$\$[\s\S]+?\$\$/g,       m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; })
+				.replace(/\\\[[\s\S]+?\\\]/g,        m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; })
+				.replace(/\$[^\$\n]+?\$/g,           m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; })
+				.replace(/\\\([\s\S]+?\\\)/g,         m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; });
 			// Convert single newlines to hard line breaks (two trailing spaces + newline)
 			// but leave blank lines (double newlines) alone so paragraphs still work
 			s = s.replace(/([^\n])\n([^\n])/g, '$1  \n$2');
@@ -283,6 +285,10 @@
 					dataType: "json",   //expect html to be returned
 					success: function (response) {
 						// console.log("response:",response);
+						if (response.error) {
+							alert("Failed to load categories: " + response.error);
+							return;
+						}
 						let htmls = "<ul>";
 						var obj = {};
 						for (const key in response) {

@@ -33,7 +33,7 @@ try {
     echo json_encode($topcatsNew);
 
 } catch (PDOException $e) {
-    echo json_encode(array("error", " error check exising username:" . $e->getMessage(), $sql));
+    echo json_encode(array("error" => "error check existing categories: " . $e->getMessage()));
 }
 
 $conn = null;
