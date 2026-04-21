@@ -361,11 +361,17 @@
 					var n = (category2questionIds[id] || []).length;
 					return n > 0 ? ` <span class="cat-count">${n}</span>` : ` <span class="cat-count cat-count-zero">0</span>`;
 				}
+				function countBadgeSum(top) {
+					var n = top.subcats.length > 0
+						? top.subcats.reduce(function(s, sub) { return s + (category2questionIds[sub.id] || []).length; }, 0)
+						: (category2questionIds[top.id] || []).length;
+					return n > 0 ? ` <span class="cat-count">${n}</span>` : ` <span class="cat-count cat-count-zero">0</span>`;
+				}
 				let htmls = "<ul>";
 				for (const top of category_contents) {
 					htmls += "<li>";
 					htmls += `<input type='checkbox' id='${top.name}' value='${top.id}' class='option' />`;
-					htmls += `<label for="${top.name}"> ${getCatEmoji(top.name) ? getCatEmoji(top.name) + ' ' : ''}${top.name}${countBadge(top.id)} </label>`;
+					htmls += `<label for="${top.name}"> ${getCatEmoji(top.name) ? getCatEmoji(top.name) + ' ' : ''}${top.name}${countBadgeSum(top)} </label>`;
 					if (top.subcats.length > 0) {
 						htmls += "<ul>";
 						htmls += "<li>";
@@ -416,7 +422,21 @@
 			function applyCategoryHighlights() {
 				document.querySelectorAll('#select-categories input').forEach(function(cb) {
 					var li = cb.parentNode;
-					var n = (category2questionIds[cb.value] || []).length;
+					var n;
+					if (cb.classList.contains('option')) {
+						// Top-level: sum subcategory counts from sibling subOption inputs
+						var subUl = li.querySelector('ul');
+						if (subUl) {
+							n = 0;
+							subUl.querySelectorAll('input.subOption').forEach(function(sub) {
+								n += (category2questionIds[sub.value] || []).length;
+							});
+						} else {
+							n = (category2questionIds[cb.value] || []).length;
+						}
+					} else {
+						n = (category2questionIds[cb.value] || []).length;
+					}
 					if (n > 0) {
 						li.classList.add('cat-cached');
 					} else {
