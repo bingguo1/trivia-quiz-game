@@ -61,8 +61,7 @@
 		function renderPreview(textareaId, previewId) {
 			const raw = document.getElementById(textareaId).value;
 			const preview = document.getElementById(previewId);
-			// Replace newlines with <br> then render math
-			preview.innerHTML = raw.replace(/\n/g, '<br>');
+			preview.innerHTML = md2html(raw);
 			renderMathInElement(preview, katex_opts);
 		}
 
@@ -75,8 +74,10 @@
 			if (!str) return '';
 			const stash = [];
 			let s = str
-				.replace(/\$\$[\s\S]+?\$\$/g, m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; })
-				.replace(/\$[^\$\n]+?\$/g,     m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; });
+				.replace(/\$\$[\s\S]+?\$\$/g,  m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; })
+				.replace(/\\\[[\s\S]+?\\\]/g,   m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; })
+				.replace(/\$[^\$\n]+?\$/g,      m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; })
+				.replace(/\\\([\s\S]+?\\\)/g,   m => { stash.push(m); return `%%MATH${stash.length - 1}%%`; });
 			s = s.replace(/([^\n])\n([^\n])/g, '$1  \n$2');
 			s = marked.parse(s);
 			s = s.replace(/%%MATH(\d+)%%/g, (_, i) => stash[parseInt(i)]);
@@ -134,7 +135,6 @@
 			// https://github.com/webfashionist/RichText
 			// https://stackoverflow.com/questions/19491336/how-to-get-url-parameter-using-jquery-or-plain-javascript
 			$("#greet").append(getit("signinUser"));
-			bindPreview('question', 'question-preview');
 
 			// EasyMDE for answer and detail
 			var mdeAnswer = new EasyMDE({
@@ -188,7 +188,6 @@
 						$("#question").val(result[2]).trigger("change");
 						mdeAnswer.value(result[3]);
 						mdeDetail.value(result[4]);
-						renderPreview('question', 'question-preview');
 					});
 				} else {
 					if (Cookies.get("previousCategory")) {
@@ -268,8 +267,7 @@
 				</select>
 				<br>
 				Question: <br>
-				<textarea name="question" id="question" rows="2"></textarea>
-				<div class="field-preview" id="question-preview"></div><br>
+				<textarea name="question" id="question" rows="2"></textarea><br>
 				Answer: <br>
 				<!--- no space between textarea, or when you edit, you wont start from the beginning  --->
 				<textarea name="answer" id="answer"></textarea>
