@@ -204,6 +204,7 @@
 			var currentSet;
 			var numberlist;
 			var questionCache = {}; // keyed by question number
+			var category2questionIds = {}; // key: categoryId, value: list of question numbers
 			//	  var categoryCondition=" ";
 			var chooseAll = false;
 			var listshowing = false;
@@ -211,6 +212,26 @@
 			var selectedCategoryIds;
 			var categorylist = {};
 			var numberNow;
+
+			var categoryEmoji = {
+				'history': '📜', 'world history': '🌍', 'china history': '🇨🇳',
+				'history timeline': '⏳', 'greek myths': '⚡',
+				'astronomy': '🔭', 'physics': '⚛️', 'computer': '💻',
+				'algorithms and database': '🧮', 'machinelearning': '🤖',
+				'sql': '🗄️', 'java': '☕', 'python': '🐍',
+				'operating system': '🖥️', 'linux': '🐧', 'kdb/q': '📊',
+				'c++': '⚙️', 'numpy_pandas_polars': '🐼',
+				'politicseconomy': '🏛️', 'economy': '📈',
+				'health': '🏥', 'biology': '🧬', 'geography': '🗺️', 'english': '📖',
+				'finance': '💰', 'wall_street_history': '🏦',
+				'quant brainteasers': '🧠', 'algotrading_execution': '⚡',
+				'market_making': '📊', 'quant knowledge': '📐', '期权': '💸', 
+				'math and statistics': '📐', 'optimal control': '🎛️',
+				'linear algebra': '🔢', 'fin_mathstat': '📉'
+			};
+			function getCatEmoji(name) {
+				return categoryEmoji[(name || '').toLowerCase().trim()] || '';
+			}
 
 			//	  console.log("user:"+getit("signinUser"));
 			if (getit("signinUser") != "") {
@@ -243,13 +264,15 @@
 
 			if (Cookies.get("categorylist")) categorylist = JSON.parse(Cookies.get("categorylist"));
 			//console.log("categorylist:",categorylist);
+			// Always restore category2questionIds and questionCache from localStorage regardless of state
+			try { questionCache = JSON.parse(localStorage.getItem('questionCache') || '{}'); } catch(e) { questionCache = {}; }
+			try { category2questionIds = JSON.parse(localStorage.getItem('category2questionIds') || '{}'); } catch(e) { category2questionIds = {}; }
 			//////// currently only numberlist is stored via cookie, all the others are session variables
 			if (localStorage.getItem("state") == "running") {
 				var nl = localStorage.getItem("numberlist");
 				if (nl) numberlist = JSON.parse(nl);
 				var sc = localStorage.getItem("selectedCategoryIds");
 				if (sc) selectedCategoryIds = JSON.parse(sc);
-				try { questionCache = JSON.parse(localStorage.getItem('questionCache') || '{}'); } catch(e) { questionCache = {}; }
 
 				i = parseInt(localStorage.getItem("iQuestion")); ///convert string to int
 				total = localStorage.getItem("total");
@@ -273,90 +296,166 @@
 
 			$("#start1").click(function () {
 				$("#start1").hide();
-				getCategoriesFromDB_andShow();
+				showCategoriesFromCacheOrDB();
 
 			});
-			function getCategoriesFromDB_andShow() {
+			function reapplyCheckboxSelections() {
+				if (!selectedCategoryIds || selectedCategoryIds.length === 0) return;
+				var ids = new Set(selectedCategoryIds.map(String));
+				document.querySelectorAll('input.subOption').forEach(function(cb) {
+					cb.checked = ids.has(String(cb.value));
+				});
+				document.querySelectorAll('input.option').forEach(function(cb) {
+					var subUl = cb.parentNode.querySelector('ul');
+					if (subUl) {
+						var subCbs = subUl.querySelectorAll('input.subOption');
+						var checkedCount = Array.from(subCbs).filter(function(s) { return s.checked; }).length;
+						cb.checked = checkedCount > 0;
+						cb.indeterminate = checkedCount > 0 && checkedCount < subCbs.length;
+					} else {
+						cb.checked = ids.has(String(cb.value));
+						cb.indeterminate = false;
+					}
+				});
+			}
+			// Fetches categories from DB, builds category_contents and updates categorylist,
+			// then calls callback(category_contents).
+			// category_contents: array of { id, name, subcats: [{id, name}] }
+			function getCategoriesFromDB(callback) {
 				categorylist = {};
-				$.ajax({    //create an ajax request to load_page.php
+				console.log('[DB] Fetching all categories from api/getAllCategories.php');
+				$.ajax({
 					global: false,
 					type: "POST",
 					url: "api/getAllCategories.php",
-					dataType: "json",   //expect html to be returned
+					dataType: "json",
 					success: function (response) {
-						// console.log("response:",response);
 						if (response.error) {
 							alert("Failed to load categories: " + response.error);
 							return;
 						}
-						let htmls = "<ul>";
-						var obj = {};
+						var category_contents = [];
 						for (const key in response) {
-
-							categorylist[response[key].Id] = response[key].name;
-							htmls += "<li>";
-							htmls += `<input type='checkbox' id='${response[key].name}' value='${response[key].Id}' class='option' />`;
-							htmls += `<label for="${response[key].name}"> ${response[key].name} </label>`
-							if (response[key].subcats.length > 0) {
-								htmls += "<ul>";
-								htmls += "<li>";
-								htmls += `<input type='checkbox' id='${response[key].name}_0' value='${response[key].Id}' class='subOption'/>`;
-								htmls += `<label for="${response[key].name}_0"> ${response[key].name} </label>`
-								htmls += "</li>";
-								for (let i = 0; i < response[key].subcats.length; i++) {
-									htmls += "<li>";
-									htmls += `<input type='checkbox' id='${response[key].subnames[i]}' value='${response[key].subids[i]}' class='subOption'/>`;
-									htmls += `<label for="${response[key].subnames[i]}"> ${response[key].subnames[i]} </label>`
-									htmls += "</li>";
-									categorylist[response[key].subids[i]] = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + response[key].subnames[i];
-								}
-
-								htmls += "</ul>";
+							var top = { id: response[key].Id, name: response[key].name, subcats: [] };
+							categorylist[top.id] = top.name;
+							for (let i = 0; i < response[key].subcats.length; i++) {
+								top.subcats.push({ id: response[key].subids[i], name: response[key].subnames[i] });
+								categorylist[response[key].subids[i]] = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + response[key].subnames[i];
 							}
-							htmls += "</li>";
+							category_contents.push(top);
 						}
-						htmls += "</ul>";
-						$("#select-categories").html(htmls);
-						$("#select-and-click").show();
-						Cookies.set("categorylist", JSON.stringify(categorylist));
-
-						let checkboxes = document.querySelectorAll('input.subOption');
-						for (let i = 0; i < checkboxes.length; i++) {
-							let name =
-								checkboxes[i].onclick = function (evt) {
-
-									// console.log(" nodename:",evt.target);
-									const sibs = getAllSiblingInputs(evt.target);
-									const topCatInput = evt.target.parentNode.parentNode.parentNode.firstChild;
-									// console.log("topCatInput:",topCatInput.nodeName);
-									let checkedCount = 0;
-									for (let j = 0; j < sibs.length; j++) {
-										if (sibs[j].checked) checkedCount += 1;
-									}
-									// console.log("checked :",checkedCount);
-									topCatInput.checked = checkedCount > 0;
-									topCatInput.indeterminate = checkedCount > 0 && checkedCount < sibs.length;
-
-								}
-						}
-						let topboxes = document.querySelectorAll('input.option');
-						for (let j = 0; j < topboxes.length; j++) {
-							topboxes[j].onclick = function (evt) {
-								//			      console.log("sibling",evt.target.nextSibling);
-								let ele = evt.target.nextSibling.nextSibling;
-								if (ele) {
-									Array.prototype.forEach.call(ele.children, li_ele => li_ele.firstChild.checked = this.checked);
-								}
-
-							}
-						}
+						Cookies.set("categorylist", JSON.stringify(categorylist));					localStorage.setItem('category_contents', JSON.stringify(category_contents));						callback(category_contents);
 					},
 					error: function (xhr, status, error) {
 						var errorMessage = xhr.status + ': ' + xhr.statusText;
 						console.log(" error comming .....");
 						alert('Error - ' + errorMessage + ' status:' + status + ' error:' + error);
 					}
-				});   // ajax
+				});
+			}
+
+			// Renders category_contents into #select-categories and attaches checkbox logic.
+			// Calls onDone() after rendering if provided.
+			function showCategories(category_contents, onDone) {
+				function countBadge(id) {
+					var n = (category2questionIds[id] || []).length;
+					return n > 0 ? ` <span class="cat-count">${n}</span>` : ` <span class="cat-count cat-count-zero">0</span>`;
+				}
+				let htmls = "<ul>";
+				for (const top of category_contents) {
+					htmls += "<li>";
+					htmls += `<input type='checkbox' id='${top.name}' value='${top.id}' class='option' />`;
+					htmls += `<label for="${top.name}"> ${getCatEmoji(top.name) ? getCatEmoji(top.name) + ' ' : ''}${top.name}${countBadge(top.id)} </label>`;
+					if (top.subcats.length > 0) {
+						htmls += "<ul>";
+						htmls += "<li>";
+						htmls += `<input type='checkbox' id='${top.name}_0' value='${top.id}' class='subOption'/>`;
+						htmls += `<label for="${top.name}_0"> ${getCatEmoji(top.name) ? getCatEmoji(top.name) + ' ' : ''}${top.name}${countBadge(top.id)} </label>`;
+						htmls += "</li>";
+						for (const sub of top.subcats) {
+							htmls += "<li>";
+							htmls += `<input type='checkbox' id='${sub.name}' value='${sub.id}' class='subOption'/>`;
+							htmls += `<label for="${sub.name}"> ${getCatEmoji(sub.name) ? getCatEmoji(sub.name) + ' ' : ''}${sub.name}${countBadge(sub.id)} </label>`;
+							htmls += "</li>";
+						}
+						htmls += "</ul>";
+					}
+					htmls += "</li>";
+				}
+				htmls += "</ul>";
+				$("#select-categories").html(htmls);
+				$("#select-and-click").show();
+
+				let checkboxes = document.querySelectorAll('input.subOption');
+				for (let i = 0; i < checkboxes.length; i++) {
+					let name =
+						checkboxes[i].onclick = function (evt) {
+							const sibs = getAllSiblingInputs(evt.target);
+							const topCatInput = evt.target.parentNode.parentNode.parentNode.firstChild;
+							let checkedCount = 0;
+							for (let j = 0; j < sibs.length; j++) {
+								if (sibs[j].checked) checkedCount += 1;
+							}
+							topCatInput.checked = checkedCount > 0;
+							topCatInput.indeterminate = checkedCount > 0 && checkedCount < sibs.length;
+						}
+				}
+				let topboxes = document.querySelectorAll('input.option');
+				for (let j = 0; j < topboxes.length; j++) {
+					topboxes[j].onclick = function (evt) {
+						let ele = evt.target.nextSibling.nextSibling;
+						if (ele) {
+							Array.prototype.forEach.call(ele.children, li_ele => li_ele.firstChild.checked = this.checked);
+						}
+					}
+				}
+				if (onDone) onDone();
+				applyCategoryHighlights();
+			}
+
+			function applyCategoryHighlights() {
+				document.querySelectorAll('#select-categories input').forEach(function(cb) {
+					var li = cb.parentNode;
+					var n = (category2questionIds[cb.value] || []).length;
+					if (n > 0) {
+						li.classList.add('cat-cached');
+					} else {
+						li.classList.remove('cat-cached');
+					}
+					// Update count badge in the sibling label
+					var label = li.querySelector('label');
+					if (label) {
+						var badge = label.querySelector('.cat-count');
+						if (badge) {
+							badge.textContent = n;
+							badge.className = n > 0 ? 'cat-count' : 'cat-count cat-count-zero';
+						}
+					}
+				});
+			}
+
+			function getCategoriesFromDB_andShow(onDone) {
+				getCategoriesFromDB(function(category_contents) {
+					showCategories(category_contents, onDone);
+				});
+			}
+
+			// Uses cached category_contents from localStorage if available and non-empty,
+			// otherwise fetches from DB.
+			function showCategoriesFromCacheOrDB(onDone) {
+				var cached = null;
+				try { cached = JSON.parse(localStorage.getItem('category_contents') || 'null'); } catch(e) {}
+				if (cached && cached.length > 0) {
+					// Restore categorylist from cache (may be stale after page reload)
+					categorylist = {};
+					for (var top of cached) {
+						categorylist[top.id] = top.name;
+						for (var sub of top.subcats) categorylist[sub.id] = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + sub.name;
+					}
+					showCategories(cached, onDone);
+				} else {
+					getCategoriesFromDB_andShow(onDone);
+				}
 			}
 
 			$("#startThem").click(function () {
@@ -369,74 +468,108 @@
 				Array.prototype.forEach.call(subCatBoxes, ele => {
 					if (ele.checked) selectedCategoryIds.push(ele.value);
 				});
-
 				if (selectedCategoryIds.length < 1) return;
-				let params = { mode: 'byCategories', categoryIds: selectedCategoryIds };
+				var missingIds = selectedCategoryIds.filter(function(id) {
+					return !category2questionIds[id] || category2questionIds[id].length === 0;
+				});
+				if (missingIds.length > 0) {
+					alert('Missing cached data for category IDs: ' + missingIds.join(', ') + '\nPlease use "Select Them (DB)" to fetch from database.');
+					return;
+				}
 				Cookies.set("selectedCategoryIds", JSON.stringify(selectedCategoryIds));
 				localStorage.setItem("selectedCategoryIds", JSON.stringify(selectedCategoryIds));
-				let stringArr = ["number", "question", "answer", "detail"];
-				askphp(params, stringArr, function (response) {
-					if (response[0] == "succeed") {
-						response.shift();
-						questionCache = {};
-						numberlist = [];
-						var n = response.length / 4;
-						for (var k = 0; k < n; k++) {
-							var num = response[4*k];
-							numberlist.push(num);
-							questionCache[num] = [response[4*k+1], response[4*k+2], response[4*k+3]];
-						}
-						localStorage.setItem('questionCache', JSON.stringify(questionCache));
-						total = numberlist.length;
-						$("#stats").html("Total:" + total);
-						shuffleAndStart();
-					} else {
-						alert(response);
+				numberlist = [];
+				var seen = new Set();
+				for (var _id of selectedCategoryIds) {
+					for (var _num of (category2questionIds[_id] || [])) {
+						if (!seen.has(_num)) { seen.add(_num); numberlist.push(_num); }
 					}
-				});
-				sessionStorage.setItem("chooseAll", "false"); // keep for compat
+				}
+				chooseAll = false;
+				total = numberlist.length;
+				$("#stats").html("Total:" + total);
+				sessionStorage.setItem("chooseAll", "false");
 				localStorage.setItem("chooseAll", "false");
+				shuffleAndStart();
 			}); // startThem click
 
-			$("#startAll").click(function () {
-				chooseAll = true;
-				var params = { mode: 'all' };
-				var stringArr = ["number", "question", "answer", "detail"];
+			$("#startThemDB").click(function () {
+				selectedCategoryIds = [];
+				const topCatBoxes = document.querySelectorAll('input.option');
+				const subCatBoxes = document.querySelectorAll('input.subOption');
+				Array.prototype.forEach.call(topCatBoxes, ele => {
+					if (!ele.indeterminate && ele.checked) selectedCategoryIds.push(ele.value);
+				});
+				Array.prototype.forEach.call(subCatBoxes, ele => {
+					if (ele.checked) selectedCategoryIds.push(ele.value);
+				});
+				if (selectedCategoryIds.length < 1) return;
+				Cookies.set("selectedCategoryIds", JSON.stringify(selectedCategoryIds));
+				localStorage.setItem("selectedCategoryIds", JSON.stringify(selectedCategoryIds));
+				let params = { mode: 'byCategories', categoryIds: selectedCategoryIds };
+				let stringArr = ["number", "question", "answer", "detail", "category"];
+				console.log('[DB] Fetching questions by categories (DB):', selectedCategoryIds);
 				askphp(params, stringArr, function (response) {
 					if (response[0] == "succeed") {
 						response.shift();
-						questionCache = {};
 						numberlist = [];
-						var n = response.length / 4;
+						var newCat2Ids = {};
+						var n = response.length / 5;
 						for (var k = 0; k < n; k++) {
-							var num = response[4*k];
+							var num = response[5*k];
 							numberlist.push(num);
-							questionCache[num] = [response[4*k+1], response[4*k+2], response[4*k+3]];
+							questionCache[num] = [response[5*k+1], response[5*k+2], response[5*k+3], response[5*k+4]];
+							var catId = response[5*k+4];
+							if (!newCat2Ids[catId]) newCat2Ids[catId] = [];
+							newCat2Ids[catId].push(num);
+						}
+						// Only update keys for selected categories; leave other keys untouched
+						for (var _id of selectedCategoryIds) {
+							category2questionIds[_id] = newCat2Ids[_id] || [];
 						}
 						localStorage.setItem('questionCache', JSON.stringify(questionCache));
+						localStorage.setItem('category2questionIds', JSON.stringify(category2questionIds));
+						applyCategoryHighlights();
+						chooseAll = false;
 						total = numberlist.length;
+						console.log('[DB] Fetched ' + total + ' questions for selected categories (DB)');
 						$("#stats").html("Total:" + total);
+						sessionStorage.setItem("chooseAll", "false");
+						localStorage.setItem("chooseAll", "false");
 						shuffleAndStart();
 					} else {
 						alert(response);
 					}
 				});
-				sessionStorage.setItem("chooseAll", "true"); // keep for compat
+			}); // startThemDB click
+
+			$("#startAll").click(function () {
+				if (Object.keys(questionCache).length === 0) {
+					alert('No cached questions found.\nPlease use "Select Them (DB)" to fetch from database first.');
+					return;
+				}
+				chooseAll = true;
+				numberlist = Object.keys(questionCache);
+				total = numberlist.length;
+				$("#stats").html("Total:" + total);
+				sessionStorage.setItem("chooseAll", "true");
 				localStorage.setItem("chooseAll", "true");
+				shuffleAndStart();
 			}); // startAll click
 
 			function getQuestionFromAjax(response) {
 				if (response[0] == "succeed") {
 					response.shift(); // use shift() to remove the first element
 					// Store raw values in cache so next visit skips AJAX
-					questionCache[numberNow] = [response[0], response[1], response[2]];
+					questionCache[numberNow] = [response[0], response[1], response[2], response[3]];
 					try { localStorage.setItem('questionCache', JSON.stringify(questionCache)); } catch(e) {}
 					currentSet = [
 						nl2br(response[0]),   // question: plain text
 						md2html(response[1]), // answer: markdown
 						md2html(response[2])  // detail: markdown
 					];
-					$("#question").html(currentSet[0]);
+					var catName = (categorylist[response[3]] || '').replace(/(&nbsp;)+/g, ' ').trim();
+					$("#question").html(currentSet[0] + '<span class="question-category">' + catName + '</span>');
 				} else {
 					alert(response);
 				}
@@ -458,11 +591,13 @@
 						md2html(cached[1]),
 						md2html(cached[2])
 					];
-					$("#question").html(currentSet[0]);
+					var catName = (categorylist[cached[3]] || '').replace(/(&nbsp;)+/g, ' ').trim();
+					$("#question").html(currentSet[0] + '<span class="question-category">' + catName + '</span>');
 				} else {
 					// Fallback: fetch individually if not in cache
 					var str = { mode: 'byNumber', number: num };
-					var stringArr = ["question", "answer", "detail"];
+					var stringArr = ["question", "answer", "detail", "category"];
+					console.log('[DB] Fetching single question by number:', num);
 					askphp(str, stringArr, getQuestionFromAjax);
 				}
 			}
@@ -534,8 +669,8 @@
 				sessionStorage.removeItem("state");
 				localStorage.removeItem("state");
 				$("#showlater").hide();
-				if ($('#select-categories').html() == '') getCategoriesFromDB_andShow();
-				else $("#select-and-click").show();
+				if ($('#select-categories').html() == '') showCategoriesFromCacheOrDB(reapplyCheckboxSelections);
+				else { $("#select-and-click").show(); reapplyCheckboxSelections(); }
 				allQuestionShowedBefore = false;
 				$("#allQuestionsHere").html("");
 				$("#expand-collapse").hide();
@@ -596,34 +731,24 @@
 				allQuestionShowedBefore = true;
 				allQuestionContent = [];
 				itemList = [];
-				var params;
-				if (chooseAll) params = { mode: 'all' };
-				else params = { mode: 'byCategories', categoryIds: selectedCategoryIds };
-				var stringArr = ["number", "question", "answer"];
-				askphp(params, stringArr, function (result) {
-					if (result[0] == "succeed") {
-						result.shift(); // use shift() to remove the first element
-						var n = result.length / 3;
-						var number;
-						var i;
-						var oneButtonHTML;
-						var content;
-						for (i = 0; i < n; i++) {
-							number = result[3 * i];
-							question = result[3 * i + 1];
-							answer = result[3 * i + 2];
-
-							oneButtonHTML = "<div class='eachItem' data-key=" + i + "> <button class='eachQuestion' type='button' onclick='clickitem( " + i + ", event)'>" + question + "</button> <button class='eachEditButton' onclick='editItem( " + i + ")'> Edit </button> </div>";
-							oneitem = new item(number, question, answer);
-							itemList.push(oneitem);
-							allQuestionContent.push(oneButtonHTML);
-						}
-						//allQuestionContentCopy=allQuestionContent.slice();
-						$("#allQuestionsHere").html(allQuestionContent);
-					} else {
-						alert(result);
-					}
-				}); // askphp
+				if (!numberlist || numberlist.length === 0) {
+					alert('No questions loaded. Please select categories first.');
+					allQuestionShowedBefore = false;
+					return;
+				}
+				for (var _i = 0; _i < numberlist.length; _i++) {
+					var _num = numberlist[_i];
+					var _cached = questionCache[_num];
+					var _question = _cached ? _cached[0] : ('Q#' + _num);
+					var _answer = _cached ? _cached[1] : '';
+					var _catRaw = _cached ? (categorylist[_cached[3]] || '') : '';
+					var _emoji = getCatEmoji(_catRaw.replace(/(&nbsp;)+/g, ' ').trim());
+					var oneButtonHTML = "<div class='eachItem' data-key=" + _i + "> <button class='eachQuestion' type='button' onclick='clickitem( " + _i + ", event)'>" + (_emoji ? _emoji + ' ' : '') + _question + "</button> <button class='eachEditButton' onclick='editItem( " + _i + ")'> Edit </button> </div>";
+					var oneitem = new item(_num, _question, _answer);
+					itemList.push(oneitem);
+					allQuestionContent.push(oneButtonHTML);
+				}
+				$("#allQuestionsHere").html(allQuestionContent);
 				$(this).html("hideAll");
 				$("#expand-collapse").show();
 				listshowing = true;
@@ -677,6 +802,10 @@
 			$("#add1btn").click(function () { openAddPageWithCategory('editAddQuestion.html?mode=add'); });
 			$("#add2btn").click(function () { openAddPageWithCategory('addTwoMoreQuestion.html'); });
 
+			$("#refreshCategories").click(function () {
+				getCategoriesFromDB_andShow(reapplyCheckboxSelections);
+			});
+
 			$("#expand-collapse-button").click(function () {
 				if (allCollapsed) {
 					allCollapsed = false;
@@ -723,8 +852,8 @@
 
 		<div class="row" id="select-and-click">
 			<div id="select-categories"></div>
-			<div class="text-center bottomspace">
-				<button type="button" class="btn btn-success btn-lg" id="startThem"> Select Them! </button>
+			<div class="text-center bottomspace">					<button type="button" class="btn btn-secondary btn-lg" id="refreshCategories"> Refresh Categories </button>				<button type="button" class="btn btn-success btn-lg" id="startThem"> Select Them! </button>
+				<button type="button" class="btn btn-info btn-lg" id="startThemDB"> Select Them (DB) </button>
 				<button type="button" class="btn btn-warning btn-lg" id="startAll"> Select All! </button>
 			</div>
 		</div>

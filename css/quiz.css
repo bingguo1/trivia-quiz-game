@@ -86,6 +86,35 @@ img{
   position: relative;
 }
 
+.question-category {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 1em;
+  color: #888;
+}
+
+.cat-cached {
+  background-color: #d4edda;
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.cat-count {
+  display: inline-block;
+  background-color: #5a6e7f;
+  color: #fff;
+  font-size: 0.75em;
+  border-radius: 10px;
+  padding: 1px 6px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.cat-count-zero {
+  background-color: #bbb;
+}
+
 .row{
 // border: 1px solid purple;
 position:relative;
@@ -118,12 +147,30 @@ position:relative;
     white-space: pre-wrap;
 } */
 
+#allQuestionsHere {
+    --bs-gutter-x: 0;
+    margin-left: 0;
+    margin-right: 0;
+}
+#allQuestionsHere > .eachItem {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+}
 .eachQuestion{
-    width: 95%;
+    width: 97%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
     /* white-space: pre-wrap; */
 }
 .eachEditButton{
-    width: 3%;
+    width: 2.5%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
 }
 /* .eachAnswer{
     white-space: pre-wrap;
